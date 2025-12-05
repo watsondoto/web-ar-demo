@@ -252,23 +252,21 @@
         const raycaster = new THREE.Raycaster();
         raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
         
-        // Get world position and direction
-        const worldPosition = new THREE.Vector3();
-        const worldDirection = new THREE.Vector3();
-        camera.getWorldPosition(worldPosition);
-        raycaster.ray.direction.getWorldDirection(worldDirection);
-        
-        // Place character 1.5 meters along the ray in WORLD space
+        // Place character 1.5 meters in front of where you're looking in world space
         const distance = 1.5;
-        const position = worldPosition.clone().add(
-          raycaster.ray.direction.clone().applyQuaternion(cameraGroup.quaternion).multiplyScalar(distance)
-        );
+        
+        // Get the ray direction in world space
+        const direction = raycaster.ray.direction.clone();
+        direction.applyQuaternion(cameraGroup.quaternion);
+        
+        // Calculate position from camera group's position
+        const position = cameraGroup.position.clone().add(direction.multiplyScalar(distance));
         
         character.position.copy(position);
         character.userData.baseY = position.y;
         
-        // Make character face camera's world position
-        character.lookAt(worldPosition);
+        // Make character face camera
+        character.lookAt(cameraGroup.position);
         character.rotation.y += Math.PI;
         
         // Add to scene (not cameraGroup) so it stays in world space
