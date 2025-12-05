@@ -2,45 +2,149 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebAR Demo</title>
     <!-- A-Frame library -->
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
     <!-- AR.js library -->
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-    <!-- Particle system (A-Frame extra component) -->
+    <!-- Particle system -->
     <script src="https://cdn.jsdelivr.net/gh/IdeaSpaceVR/aframe-particle-system-component/dist/aframe-particle-system-component.min.js"></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+      #start-button {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 9999;
+        padding: 20px 40px;
+        font-size: 18px;
+        background: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+      }
+      #start-button:hover {
+        background: #45a049;
+      }
+      .hidden {
+        display: none;
+      }
+      #loading {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 9998;
+        color: white;
+        font-size: 16px;
+        font-family: Arial, sans-serif;
+      }
+    </style>
   </head>
-  <body style="margin:0; overflow:hidden;">
-    <a-scene embedded arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+  <body>
+    <button id="start-button">Start AR Experience</button>
+    <div id="loading" class="hidden">Loading camera...</div>
+    
+    <a-scene 
+      id="arScene"
+      class="hidden"
+      embedded 
+      arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
+      vr-mode-ui="enabled: false"
+      renderer="logarithmicDepthBuffer: true; precision: medium;">
 
-      <!-- Marker (Hiro preset) -->
-      <a-marker type="pattern" url="markers/markers.patt">
+      <!-- Marker (Hiro preset or custom pattern) -->
+      <a-marker id="marker" type="pattern" preset="hiro">
         
         <!-- Rotating cube -->
-        <a-box id="cube" position="0 0.5 0" rotation="0 45 0" color="green" scale="0.5 0.5 0.5"></a-box>
+        <a-box 
+          id="cube" 
+          position="0 0.5 0" 
+          rotation="0 45 0" 
+          color="#00ff00" 
+          scale="0.5 0.5 0.5"
+          material="opacity: 0.9">
+        </a-box>
         
         <!-- Particle system -->
-        <a-entity particle-system="preset: dust; particleCount: 500; size: 0.02; color: #ff0000, #ffff00;"></a-entity>
+        <a-entity 
+          particle-system="preset: dust; particleCount: 500; size: 0.02; color: #ff0000, #ffff00;">
+        </a-entity>
       
       </a-marker>
 
       <!-- Camera -->
       <a-entity camera></a-entity>
 
-      <!-- Cube rotation component -->
-      <script>
-        AFRAME.registerComponent('rotate-cube', {
-          tick: function () {
-            const cube = document.querySelector('#cube');
-            if(cube){
-              cube.object3D.rotation.y += 0.01;
-              cube.object3D.rotation.x += 0.005;
-            }
-          }
-        });
-        document.querySelector('#cube').setAttribute('rotate-cube', '');
-      </script>
-
     </a-scene>
+
+    <script>
+      // Cube rotation component
+      AFRAME.registerComponent('rotate-cube', {
+        tick: function () {
+          const cube = document.querySelector('#cube');
+          if(cube){
+            cube.object3D.rotation.y += 0.01;
+            cube.object3D.rotation.x += 0.005;
+          }
+        }
+      });
+
+      // Start button handler
+      document.getElementById('start-button').addEventListener('click', async function() {
+        const button = this;
+        const loading = document.getElementById('loading');
+        const scene = document.getElementById('arScene');
+        
+        button.classList.add('hidden');
+        loading.classList.remove('hidden');
+        
+        try {
+          // Request camera permission explicitly
+          const stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+              facingMode: 'environment',
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            } 
+          });
+          
+          // Stop the test stream
+          stream.getTracks().forEach(track => track.stop());
+          
+          // Show the AR scene
+          loading.classList.add('hidden');
+          scene.classList.remove('hidden');
+          
+          // Add rotation component after scene is visible
+          setTimeout(() => {
+            const cube = document.querySelector('#cube');
+            if (cube) {
+              cube.setAttribute('rotate-cube', '');
+            }
+          }, 1000);
+          
+        } catch (error) {
+          console.error('Camera access error:', error);
+          loading.innerHTML = 'Camera permission denied. Please enable camera access in your browser settings.';
+        }
+      });
+
+      // Alternative: Auto-start after a delay (uncomment if you prefer)
+      /*
+      window.addEventListener('load', function() {
+        setTimeout(() => {
+          document.getElementById('start-button').click();
+        }, 500);
+      });
+      */
+    </script>
   </body>
 </html>
