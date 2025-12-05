@@ -6,8 +6,8 @@
     <title>WebAR Demo</title>
     <!-- A-Frame library -->
     <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <!-- AR.js library -->
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <!-- AR.js library - Using stable version from jsDelivr -->
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
     <!-- Particle system -->
     <script src="https://cdn.jsdelivr.net/gh/IdeaSpaceVR/aframe-particle-system-component/dist/aframe-particle-system-component.min.js"></script>
     <style>
@@ -98,7 +98,7 @@
       <a-marker 
         id="marker" 
         type="pattern" 
-        url="pattern-maker.patt" 
+        url="markers/markers.patt" 
         raycaster="objects: .clickable" 
         emitevents="true" 
         cursor="fuse: false; rayOrigin: mouse;"
