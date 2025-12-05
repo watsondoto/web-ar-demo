@@ -170,53 +170,54 @@
 
       function createCharacter() {
         const character = new THREE.Group();
+        const scale = 0.25; // Make 4x smaller (about 20cm tall)
         
         // Body
-        const bodyGeom = new THREE.CylinderGeometry(0.15, 0.2, 0.5, 8);
+        const bodyGeom = new THREE.CylinderGeometry(0.15 * scale, 0.2 * scale, 0.5 * scale, 8);
         const bodyMat = new THREE.MeshPhongMaterial({ color: 0x4CAF50 });
         const body = new THREE.Mesh(bodyGeom, bodyMat);
-        body.position.y = 0.25;
+        body.position.y = 0.25 * scale;
         character.add(body);
         
         // Head
-        const headGeom = new THREE.SphereGeometry(0.15, 16, 16);
+        const headGeom = new THREE.SphereGeometry(0.15 * scale, 16, 16);
         const headMat = new THREE.MeshPhongMaterial({ color: 0xFFD700 });
         const head = new THREE.Mesh(headGeom, headMat);
-        head.position.y = 0.65;
+        head.position.y = 0.65 * scale;
         character.add(head);
         
         // Eyes
-        const eyeGeom = new THREE.SphereGeometry(0.04, 8, 8);
+        const eyeGeom = new THREE.SphereGeometry(0.04 * scale, 8, 8);
         const eyeMat = new THREE.MeshPhongMaterial({ color: 0x000000 });
         const leftEye = new THREE.Mesh(eyeGeom, eyeMat);
-        leftEye.position.set(-0.06, 0.68, 0.13);
+        leftEye.position.set(-0.06 * scale, 0.68 * scale, 0.13 * scale);
         character.add(leftEye);
         const rightEye = leftEye.clone();
-        rightEye.position.x = 0.06;
+        rightEye.position.x = 0.06 * scale;
         character.add(rightEye);
         
         // Arms
-        const armGeom = new THREE.CylinderGeometry(0.05, 0.04, 0.4, 8);
+        const armGeom = new THREE.CylinderGeometry(0.05 * scale, 0.04 * scale, 0.4 * scale, 8);
         const armMat = new THREE.MeshPhongMaterial({ color: 0x4CAF50 });
         const leftArm = new THREE.Mesh(armGeom, armMat);
-        leftArm.position.set(-0.25, 0.25, 0);
+        leftArm.position.set(-0.25 * scale, 0.25 * scale, 0);
         leftArm.rotation.z = 0.5;
         character.add(leftArm);
         
         const rightArm = new THREE.Mesh(armGeom, armMat);
-        rightArm.position.set(0.25, 0.25, 0);
+        rightArm.position.set(0.25 * scale, 0.25 * scale, 0);
         rightArm.rotation.z = -0.5;
         character.add(rightArm);
         
         // Legs
-        const legGeom = new THREE.CylinderGeometry(0.06, 0.05, 0.4, 8);
+        const legGeom = new THREE.CylinderGeometry(0.06 * scale, 0.05 * scale, 0.4 * scale, 8);
         const legMat = new THREE.MeshPhongMaterial({ color: 0x2196F3 });
         const leftLeg = new THREE.Mesh(legGeom, legMat);
-        leftLeg.position.set(-0.1, -0.2, 0);
+        leftLeg.position.set(-0.1 * scale, -0.2 * scale, 0);
         character.add(leftLeg);
         
         const rightLeg = new THREE.Mesh(legGeom, legMat);
-        rightLeg.position.set(0.1, -0.2, 0);
+        rightLeg.position.set(0.1 * scale, -0.2 * scale, 0);
         character.add(rightLeg);
         
         // Store references for animation
@@ -227,27 +228,35 @@
           rightLeg: rightLeg,
           head: head,
           startTime: Date.now(),
-          baseY: 0
+          baseY: 0,
+          scale: scale
         };
         
         return character;
       }
 
-      function placeCharacter() {
+      function placeCharacter(touchX, touchY) {
         const character = createCharacter();
         
-        // Calculate relative rotation from initial orientation
-        const yaw = initialOrientation 
-          ? (deviceOrientation.alpha - initialOrientation.alpha) * Math.PI / 180
-          : 0;
+        // Convert screen coordinates to normalized device coordinates (-1 to +1)
+        const x = (touchX / window.innerWidth) * 2 - 1;
+        const y = -(touchY / window.innerHeight) * 2 + 1;
         
-        // Place character 2 meters in front of camera
-        const distance = 2;
-        const x = Math.sin(yaw) * distance;
-        const z = -Math.cos(yaw) * distance;
+        // Create raycaster from tap position
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(new THREE.Vector2(x, y), camera);
         
-        character.position.set(x, -0.5, z);
-        character.userData.baseY = -0.5;
+        // Place character 1.5 meters along the ray
+        const distance = 1.5;
+        const direction = raycaster.ray.direction;
+        const position = camera.position.clone().add(direction.multiplyScalar(distance));
+        
+        character.position.copy(position);
+        character.userData.baseY = position.y;
+        
+        // Make character face camera
+        character.lookAt(camera.position);
+        character.rotation.y += Math.PI;
         
         scene.add(character);
         characters.push(character);
@@ -299,12 +308,13 @@
           // Character animation
           if (obj.userData.startTime) {
             const t = (Date.now() - obj.userData.startTime) / 1000;
+            const scale = obj.userData.scale;
             
             // Bounce
-            obj.position.y = obj.userData.baseY + Math.abs(Math.sin(t * 3)) * 0.1;
+            obj.position.y = obj.userData.baseY + Math.abs(Math.sin(t * 3)) * 0.1 * scale;
             
             // Rotate
-            obj.rotation.y = Math.sin(t * 2) * 0.4;
+            obj.rotation.y += 0.01;
             
             // Arms
             obj.userData.leftArm.rotation.z = 0.5 + Math.sin(t * 4) * 0.6;
@@ -345,14 +355,14 @@
       canvas.addEventListener('click', (e) => {
         if (isARActive) {
           e.preventDefault();
-          placeCharacter();
+          placeCharacter(e.clientX, e.clientY);
         }
       });
 
       canvas.addEventListener('touchstart', (e) => {
-        if (isARActive) {
+        if (isARActive && e.touches.length > 0) {
           e.preventDefault();
-          placeCharacter();
+          placeCharacter(e.touches[0].clientX, e.touches[0].clientY);
         }
       });
 
