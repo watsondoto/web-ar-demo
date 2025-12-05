@@ -4,13 +4,6 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>WebAR Demo</title>
-    <!-- A-Frame library -->
-    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <!-- AR.js library - Using stable version from jsDelivr -->
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-    
-    <!-- Particle system -->
-    <script src="https://cdn.jsdelivr.net/gh/IdeaSpaceVR/aframe-particle-system-component/dist/aframe-particle-system-component.min.js"></script>
     <style>
       body {
         margin: 0;
@@ -18,6 +11,7 @@
         position: fixed;
         width: 100%;
         height: 100%;
+        background: black;
       }
       #overlay {
         position: fixed;
@@ -43,9 +37,6 @@
         font-weight: bold;
         margin-bottom: 20px;
       }
-      #start-button:hover {
-        background: #45a049;
-      }
       #instructions {
         color: white;
         font-family: Arial, sans-serif;
@@ -68,12 +59,22 @@
       .hidden {
         display: none !important;
       }
-      .a-canvas {
+      #video {
         position: fixed;
         top: 0;
         left: 0;
-        width: 100% !important;
-        height: 100% !important;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 1;
+      }
+      #canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 2;
       }
     </style>
   </head>
@@ -81,34 +82,38 @@
     <div id="overlay">
       <div id="instructions">
         <h2>WebAR Demo</h2>
-        <p>Point your camera at your custom marker to see the AR content</p>
+        <p>Point your camera at your custom marker</p>
       </div>
       <button id="start-button">Start AR</button>
     </div>
 
     <div id="debug" class="hidden">Initializing...</div>
     
+    <video id="video" playsinline autoplay muted class="hidden"></video>
+    <canvas id="canvas" class="hidden"></canvas>
+
+    <!-- A-Frame library -->
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <!-- AR.js library - Multiple fallback sources -->
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js@3.4.5/aframe/build/aframe-ar.js"></script>
+    <!-- Particle system -->
+    <script src="https://cdn.jsdelivr.net/gh/IdeaSpaceVR/aframe-particle-system-component/dist/aframe-particle-system-component.min.js"></script>
+
     <a-scene 
       id="arScene"
+      class="hidden"
       embedded 
       arjs="sourceType: webcam; sourceWidth:1280; sourceHeight:960; displayWidth: 1280; displayHeight: 960; debugUIEnabled: false;"
       vr-mode-ui="enabled: false"
-      renderer="logarithmicDepthBuffer: true; precision: medium; antialias: true; alpha: true;">
+      renderer="logarithmicDepthBuffer: true; precision: medium;">
 
-      <!-- Marker (Custom pattern) -->
       <a-marker 
         id="marker" 
         type="pattern" 
         url="markers/markers.patt" 
-        raycaster="objects: .clickable" 
-        emitevents="true" 
-        cursor="fuse: false; rayOrigin: mouse;"
-        smooth="true"
-        smoothCount="10"
-        smoothTolerance="0.01"
-        smoothThreshold="5">
+        emitevents="true"
+        smooth="true">
         
-        <!-- Rotating cube -->
         <a-box 
           id="cube" 
           position="0 0.5 0" 
@@ -118,20 +123,21 @@
           animation="property: rotation; to: 0 360 0; loop: true; dur: 3000; easing: linear">
         </a-box>
         
-        <!-- Particle system -->
         <a-entity 
-          particle-system="preset: dust; particleCount: 300; size: 0.02; color: #ff0000, #ffff00; maxAge: 2;">
+          particle-system="preset: dust; particleCount: 300; size: 0.02; color: #ff0000, #ffff00;">
         </a-entity>
       
       </a-marker>
 
-      <!-- Camera -->
       <a-entity camera></a-entity>
-
     </a-scene>
 
     <script>
       const debugDiv = document.getElementById('debug');
+      const video = document.getElementById('video');
+      const canvas = document.getElementById('canvas');
+      const overlay = document.getElementById('overlay');
+      const scene = document.getElementById('arScene');
       
       function log(msg) {
         console.log(msg);
@@ -139,15 +145,48 @@
       }
 
       document.getElementById('start-button').addEventListener('click', async function() {
-        const overlay = document.getElementById('overlay');
-        const scene = document.getElementById('arScene');
-        
         debugDiv.classList.remove('hidden');
         log('Start button clicked');
         
         try {
-          // Request camera permission first
-          log('Requesting camera permission...');
+          // Check if AR.js loaded
+          if (window.AFRAME && window.AFRAME.components && window.AFRAME.components.arjs) {
+            log('✓ AR.js loaded successfully');
+            
+            // Method 1: Let AR.js handle everything
+            overlay.classList.add('hidden');
+            scene.classList.remove('hidden');
+            log('AR.js scene activated');
+            
+            // Monitor for video element
+            let attempts = 0;
+            const checkVideo = setInterval(() => {
+              const arVideo = document.querySelector('video');
+              attempts++;
+              
+              if (arVideo && arVideo.videoWidth > 0) {
+                log('✓ Video feed active: ' + arVideo.videoWidth + 'x' + arVideo.videoHeight);
+                clearInterval(checkVideo);
+              } else if (attempts > 10) {
+                log('⚠ Video not starting, trying manual init...');
+                clearInterval(checkVideo);
+                initManualCamera();
+              }
+            }, 500);
+            
+          } else {
+            log('✗ AR.js not loaded, using manual camera');
+            initManualCamera();
+          }
+          
+        } catch (error) {
+          log('ERROR: ' + error.message);
+        }
+      });
+
+      async function initManualCamera() {
+        try {
+          log('Starting manual camera...');
           const stream = await navigator.mediaDevices.getUserMedia({ 
             video: { 
               facingMode: 'environment',
@@ -156,87 +195,42 @@
             } 
           });
           
-          log('Camera permission granted');
+          video.srcObject = stream;
+          video.play();
           
-          // Stop our test stream - AR.js will create its own
-          stream.getTracks().forEach(track => {
-            track.stop();
-            log('Stopped test stream');
-          });
-          
-          // Hide overlay
-          overlay.classList.add('hidden');
-          log('Overlay hidden, waiting for AR.js...');
-          
-          // Wait a moment then check for video element
-          setTimeout(() => {
-            const video = document.querySelector('video');
-            if (video) {
-              log('Video element found: ' + video.videoWidth + 'x' + video.videoHeight);
-              log('Video readyState: ' + video.readyState);
-              
-              // Force video to be visible
-              video.style.position = 'fixed';
-              video.style.top = '0';
-              video.style.left = '0';
-              video.style.width = '100%';
-              video.style.height = '100%';
-              video.style.objectFit = 'cover';
-              video.style.zIndex = '1';
-              
-              log('Video styles applied');
-            } else {
-              log('ERROR: No video element found!');
-            }
+          video.onloadedmetadata = () => {
+            log('✓ Manual camera active: ' + video.videoWidth + 'x' + video.videoHeight);
+            overlay.classList.add('hidden');
+            video.classList.remove('hidden');
+            canvas.classList.remove('hidden');
             
-            // Check canvas
-            const canvas = document.querySelector('canvas');
-            if (canvas) {
-              log('Canvas found: ' + canvas.width + 'x' + canvas.height);
-              canvas.style.zIndex = '2';
-            } else {
-              log('ERROR: No canvas element found!');
-            }
-          }, 2000);
+            // Setup canvas
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            log('✓ Canvas setup complete');
+          };
           
         } catch (error) {
-          log('ERROR: ' + error.message);
-          alert('Camera error: ' + error.message);
+          log('Camera error: ' + error.message);
+          alert('Cannot access camera: ' + error.message);
         }
-      });
+      }
 
-      // Scene events
+      // Marker detection
       window.addEventListener('load', function() {
-        const scene = document.getElementById('arScene');
-        
-        scene.addEventListener('loaded', function() {
-          log('A-Frame scene loaded');
-        });
-        
-        scene.addEventListener('renderstart', function() {
-          log('A-Frame render started');
-        });
-        
-        // Marker events
-        const marker = document.getElementById('marker');
-        
-        marker.addEventListener('markerFound', function() {
-          log('✓ MARKER FOUND!');
-        });
-        
-        marker.addEventListener('markerLost', function() {
-          log('✗ Marker lost');
-        });
+        setTimeout(() => {
+          const marker = document.getElementById('marker');
+          if (marker) {
+            marker.addEventListener('markerFound', function() {
+              log('✓ MARKER DETECTED!');
+            });
+            
+            marker.addEventListener('markerLost', function() {
+              log('✗ Marker lost');
+            });
+          }
+        }, 2000);
       });
-
-      // Check AR.js initialization
-      setTimeout(() => {
-        if (window.AFRAME && window.AFRAME.components && window.AFRAME.components.arjs) {
-          log('AR.js component loaded');
-        } else {
-          log('WARNING: AR.js not loaded properly');
-        }
-      }, 1000);
     </script>
   </body>
 </html>
