@@ -1,86 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>🎆 WebAR Portal - HIRO Marker</title>
+  <meta charset="UTF-8">
+  <title>Advanced WebAR Portal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- A-Frame -->
-  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-
-  <!-- AR.js -->
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/three.js/build/ar-threex.js"></script>
 
   <style>
-    body { margin: 0; overflow: hidden; font-family: sans-serif; }
+    body { margin: 0; overflow: hidden; }
+    #loading { position: fixed; color: white; top: 20px; left: 20px; }
   </style>
 </head>
-
 <body>
-  <a-scene
-    embedded
-    vr-mode-ui="enabled: false"
-    arjs="sourceType: webcam; debugUIEnabled: false;"
-  >
-
-    <!-- HIRO Marker -->
-    <a-marker preset="hiro">
-
-      <!-- Portal Ring -->
-      <a-torus
-        position="0 0.5 0"
-        radius="1"
-        radius-tubular="0.08"
-        color="#00ffff"
-        animation="property: rotation; to: 0 360 0; loop: true; dur: 3000"
-      ></a-torus>
-
-      <!-- Inner glow disc -->
-      <a-circle
-        position="0 0.5 0"
-        rotation="-90 0 0"
-        radius="0.9"
-        color="#001f3f"
-        opacity="0.7"
-      ></a-circle>
-
-      <!-- Floating Text -->
-      <a-text
-        value="🎆 HAPPY NEW YEAR 2026 🎆"
-        align="center"
-        position="0 1.6 0"
-        scale="1.5 1.5 1.5"
-        color="#ffffff"
-        animation="property: position; to: 0 2 0; dir: alternate; loop: true; dur: 1500"
-      ></a-text>
-
-      <!-- Spark particles (orbs) -->
-      <a-entity id="sparks">
-        <a-sphere
-          radius="0.05"
-          color="#ff00ff"
-          position="1 1 0"
-          animation="property: rotation; to: 360 360 360; loop: true; dur: 2000"
-        ></a-sphere>
-        <a-sphere
-          radius="0.05"
-          color="#ffff00"
-          position="-1 1 0"
-          animation="property: rotation; to: -360 360 360; loop: true; dur: 2500"
-        ></a-sphere>
-        <a-sphere
-          radius="0.05"
-          color="#00ff00"
-          position="0 1 -1"
-          animation="property: rotation; to: 360 -360 360; loop: true; dur: 1800"
-        ></a-sphere>
-      </a-entity>
-
-    </a-marker>
-
-    <!-- Camera -->
-    <a-entity camera></a-entity>
-
-  </a-scene>
+  <div id="loading">Loading AR...</div>
+  <script type="module" src="main.js"></script>
 </body>
 </html>
