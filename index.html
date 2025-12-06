@@ -1,30 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>WebAR Portal - Working</title>
+  <meta charset="UTF-8">
+  <title>🎆 WebAR New Year Portal</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- Three.js -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+  <!-- A-Frame -->
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 
-  <!-- AR.js for Three.js -->
-  <script src="https://raw.githack.com/AR-js-org/AR.js/master/three.js/build/ar-threex.js"></script>
+  <!-- AR.js for A-Frame -->
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 
   <style>
-    body { margin:0; overflow:hidden; background:#000; }
-    #loading {
+    body { margin: 0; overflow: hidden; }
+    #instructions {
       position: fixed;
-      top: 20px;
-      left: 20px;
+      top: 10px;
+      left: 10px;
       color: white;
       font-family: sans-serif;
       z-index: 9999;
     }
   </style>
 </head>
+
 <body>
-  <div id="loading">Starting camera…</div>
-  <script src="main.js"></script>
+  <div id="instructions">Scan the HIRO marker to see the portal 🎆</div>
+
+  <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+
+    <!-- HIRO Marker -->
+    <a-marker preset="hiro">
+
+      <!-- Portal Ring -->
+      <a-torus
+        position="0 0.5 0"
+        radius="1"
+        radius-tubular="0.08"
+        color="#00ffff"
+        material="shader: standard; emissive: #00ffff; emissiveIntensity: 0.6;"
+        animation="property: rotation; to: 0 360 0; loop: true; dur: 3000">
+      </a-torus>
+
+      <!-- Inner Glow Circle -->
+      <a-circle
+        position="0 0.5 0"
+        rotation="-90 0 0"
+        radius="0.9"
+        color="#001f3f"
+        opacity="0.7">
+      </a-circle>
+
+      <!-- Floating Text -->
+      <a-text
+        value="🎆 HAPPY NEW YEAR 2026 🎆"
+        align="center"
+        position="0 1.6 0"
+        scale="1.5 1.5 1.5"
+        color="#ffffff"
+        animation="property: position; to: 0 2 0; dir: alternate; loop: true; dur: 1500">
+      </a-text>
+
+      <!-- Spark Particles -->
+      <a-entity id="particles">
+        <a-sphere radius="0.05" color="#ff00ff" position="1 1 0"
+                  animation="property: rotation; to: 360 360 360; loop: true; dur: 2000"></a-sphere>
+        <a-sphere radius="0.05" color="#ffff00" position="-1 1 0"
+                  animation="property: rotation; to: -360 360 360; loop: true; dur: 2500"></a-sphere>
+        <a-sphere radius="0.05" color="#00ff00" position="0 1 -1"
+                  animation="property: rotation; to: 360 -360 360; loop: true; dur: 1800"></a-sphere>
+      </a-entity>
+
+      <!-- Fireworks (using simple particles) -->
+      <a-entity particle-system="preset: snow; particleCount: 100; color: #ffcc00, #ff0000, #00ffff; size: 0.05"
+                position="0 1 0">
+      </a-entity>
+
+      <!-- Celebration sound -->
+      <a-sound src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_0a8e5e5d6f.mp3?filename=fireworks-115018.mp3"
+               autoplay="true" loop="true" position="0 1 0">
+      </a-sound>
+
+    </a-marker>
+
+    <!-- Camera -->
+    <a-entity camera></a-entity>
+
+  </a-scene>
 </body>
 </html>
