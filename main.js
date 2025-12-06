@@ -8,7 +8,12 @@ animate();
 function init() {
   scene = new THREE.Scene();
 
-  camera = new THREE.Camera();
+  camera = new THREE.PerspectiveCamera(
+    60, // Field of view
+    window.innerWidth / window.innerHeight, // Aspect ratio
+    0.1, // Near plane
+    1000 // Far plane
+  );
   scene.add(camera);
 
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
