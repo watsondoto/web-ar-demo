@@ -1,163 +1,280 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>✨ 3D New Year Invitation — Marker AR</title>
+  <title>✨ NYE 2026 AR Experience</title>
 
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-  <script src="https://unpkg.com/aframe-particle-system-component@1.1.3/dist/aframe-particle-system-component.min.js"></script>
+  
+  <script src="https://unpkg.com/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script>
 
   <style>
-    /* BASIC SETUP */
-    html, body { 
-        height: 100%; 
+    /* --- DESIGN SYSTEM: LUXE DARK --- */
+    :root {
+      --gold: #FFD700;
+      --gold-dim: #C5A000;
+      --dark: #050505;
+      --glass: rgba(255, 255, 255, 0.05);
+      --border: rgba(255, 215, 0, 0.2);
+    }
+
+    body { 
         margin: 0; 
-        overflow: hidden;
-        font-family: Inter, system-ui, sans-serif; 
-        background-color: transparent !important; 
+        overflow: hidden; 
+        font-family: 'Inter', sans-serif; 
+        background: var(--dark);
+        color: white;
     }
 
-    /* FIX: VIDEO & CANVAS LAYERING */
-    .a-canvas {
-        z-index: 1 !important;
-    }
-    video {
-        z-index: 0 !important;
+    /* CANVAS LAYERING */
+    .a-canvas { z-index: 1 !important; }
+    video { z-index: 0 !important; filter: brightness(0.8) contrast(1.2); } /* Cinematic camera look */
+
+    /* UI CONTAINER */
+    #ui-layer {
+        position: absolute; inset: 0; z-index: 10; pointer-events: none;
+        display: flex; flex-direction: column; justify-content: space-between;
+        padding: 24px;
     }
 
-    /* UI LAYOUT */
-    #ui { position: absolute; left: 12px; right: 12px; top: 12px; z-index: 10; pointer-events: none; }
-    .panel { pointer-events: auto; background: linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.4)); color: #fff; padding: 12px 14px; border-radius: 12px; backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.1); }
-    .title { font-size:18px; font-weight:600; margin-bottom:6px; }
-    .sub { font-size:13px; color: #f0e6ff; opacity:0.95 }
+    /* HEADER */
+    .header {
+        pointer-events: auto;
+        background: var(--glass);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 16px;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        transform: translateY(-100px);
+        animation: slideDown 1s ease forwards 0.5s;
+    }
     
-    #rsvpBtn { position: absolute; right: 18px; bottom: 18px; z-index: 11; pointer-events: auto; }
-    .btn { background: linear-gradient(90deg,#ff6b6b,#ffd166); color:#111; border:none; padding:12px 18px; font-weight:700; border-radius:999px; box-shadow: 0 8px 30px rgba(255,107,107,0.18); cursor:pointer; }
+    .header h1 { margin:0; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; color: var(--gold); }
+    .header p { margin:4px 0 0; font-size: 0.8rem; color: #aaa; }
+
+    /* BUTTONS */
+    .btn-group { pointer-events: auto; display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; }
+    
+    .btn {
+        background: var(--glass);
+        border: 1px solid var(--border);
+        color: var(--gold);
+        padding: 14px 28px;
+        border-radius: 50px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(4px);
+    }
+    .btn:hover { background: var(--gold); color: var(--dark); box-shadow: 0 0 20px var(--gold); }
+    .btn-primary { background: linear-gradient(135deg, var(--gold), var(--gold-dim)); color: black; border: none; }
+
+    /* LOADING OVERLAY */
+    #loader {
+        position: fixed; inset: 0; z-index: 9999;
+        background: radial-gradient(circle at center, #1a1a1a, #000);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        transition: opacity 0.5s;
+    }
+    .spinner {
+        width: 50px; height: 50px;
+        border: 3px solid rgba(255,215,0,0.1);
+        border-top: 3px solid var(--gold);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+    }
     
     /* MODAL */
-    #modal { position: fixed; inset:0; display:none; align-items:center; justify-content:center; z-index: 10001; background: rgba(0,0,0,0.8); }
-    #modal .content { width: min(520px, 92%); background: #0b1020; border-radius:14px; padding:18px; box-shadow: 0 20px 60px rgba(2,6,23,0.7); color:#e8eaf6 }
-    #closeModal { float:right; background:transparent; border:none; color:#bbb; font-size:18px; cursor: pointer; }
-    
-    /* LOADING SCREEN */
-    .arjs-loader { 
-        height: 100%; width: 100%; position: absolute; top: 0; left: 0; 
-        background-color: rgba(0, 0, 0, 0.8); 
-        z-index: 9999; /* High z-index */
-        display: flex; justify-content: center; align-items: center; 
+    #modal {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100;
+        display: none; align-items: center; justify-content: center;
+        backdrop-filter: blur(8px);
     }
-    .arjs-loader div { text-align: center; font-size: 1.25em; color: white; }
+    .modal-card {
+        background: #111; border: 1px solid var(--border);
+        padding: 30px; border-radius: 20px; width: 90%; max-width: 400px;
+        text-align: center;
+        box-shadow: 0 0 50px rgba(255, 215, 0, 0.1);
+    }
+    input { width: 100%; background: #222; border: 1px solid #333; padding: 12px; color: white; margin: 10px 0 20px; border-radius: 8px; outline: none; }
+    input:focus { border-color: var(--gold); }
 
-    /* START BUTTON - IMPORTANT: Must be higher than loader */
-    #startBtn { 
-        position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); 
-        padding:20px 28px; font-size:18px; border-radius:12px; cursor:pointer; 
-        background:linear-gradient(90deg,#ff6b6b,#ffd166); color:#111; 
-        z-index: 10000; /* Higher than loader so you can click it */
-        box-shadow: 0 0 20px rgba(255, 107, 107, 0.5); border: none; 
-    }
+    /* ANIMATIONS */
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    @keyframes slideDown { to { transform: translateY(0); } }
   </style>
 </head>
 
 <body>
 
-  <div class="arjs-loader">
-    <div>Loading Augmented Reality...</div>
+  <div id="loader">
+    <div class="spinner"></div>
+    <div style="color:#666; font-size: 0.9rem; letter-spacing: 1px;">INITIALIZING AR ENGINE</div>
+    <button id="startBtn" class="btn btn-primary" style="margin-top: 30px; display: none;">ENTER EXPERIENCE</button>
   </div>
 
-  <button id="startBtn">🎥 TAP TO START</button>
-
-  <div id="ui">
-    <div class="panel">
-      <div class="title">🎆 You're Invited!</div>
-      <div class="sub">Point camera at a Hiro marker.</div>
+  <div id="ui-layer">
+    <div class="header">
+      <h1>The Grand Celebration</h1>
+      <p>Scan the Hiro Marker</p>
+    </div>
+    <div class="btn-group">
+      <button class="btn" id="rsvpTrigger">RSVP Now</button>
     </div>
   </div>
 
-  <div id="rsvpBtn">
-    <button class="btn" id="openRsvp">RSVP</button>
-  </div>
-
   <div id="modal">
-    <div class="content">
-      <button id="closeModal">✕</button>
-      <h2 style="margin-top:6px">RSVP — Happy New Year!</h2>
-      <p>We'd love to celebrate with you!</p>
-      <form id="rsvpForm">
-        <label style="display:block; margin-top:8px">Your name</label>
-        <input type="text" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #2b3350; background:#07102a; color:#fff;" />
-        <div style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end">
-          <button type="button" id="cancel" style="padding:10px 14px; border-radius:8px; background:transparent; color:#fff; border:1px solid #2b3350; cursor:pointer;">Cancel</button>
-          <button type="submit" class="btn">Send</button>
+    <div class="modal-card">
+        <h2 style="color:var(--gold); margin-top:0">Join the Party</h2>
+        <p style="color:#ccc; font-size:0.9rem">Enter your name to confirm attendance.</p>
+        <input type="text" placeholder="Your Name" />
+        <div style="display:flex; gap:10px;">
+            <button class="btn" id="closeModal" style="flex:1; border-color:#444; color:#888;">Cancel</button>
+            <button class="btn btn-primary" id="submitRsvp" style="flex:1;">Confirm</button>
         </div>
-      </form>
     </div>
   </div>
 
   <a-scene 
+    embedded
     vr-mode-ui="enabled: false"
-    renderer="logarithmicDepthBuffer: true; colorManagement: true;"
-    arjs="sourceType: webcam; debugUIEnabled: false;">
+    renderer="logarithmicDepthBuffer: true; colorManagement: true; antialias: true;"
+    arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best;">
 
     <a-assets>
-      <a-asset-item id="invitationModel" src="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF-Binary/Duck.glb"></a-asset-item>
-    </a-assets>
+        <img id="sparkle" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="> </a-assets>
 
-    <a-entity camera></a-entity>
+    <a-entity light="type: ambient; color: #ffffff; intensity: 0.3"></a-entity>
+    <a-entity light="type: directional; color: #FFD700; intensity: 1.5; castShadow: true" position="-1 2 1"></a-entity>
+    <a-entity light="type: point; color: #ff0055; intensity: 2; distance: 10" position="0 2 0" 
+              animation="property: intensity; dir: alternate; dur: 200; to: 0.5; loop: true"></a-entity>
 
-    <a-marker preset="hiro" id="invMarker">
-        <a-entity id="cardRoot" position="0 0 0" rotation="-90 0 0">
-            <a-ring radius-inner="0.5" radius-outer="0.8" material="color: #ff6b6b; opacity: 0.8"></a-ring>
-            <a-entity 
-                id="gltfInv" 
-                gltf-model="#invitationModel" 
-                scale="1 1 1" 
-                position="0 0 0" 
-                animation="property: rotation; to: 0 360 0; loop: true; dur: 4000; easing: linear">
+    <a-marker preset="hiro" id="marker">
+        
+        <a-entity id="mainContainer" scale="0 0 0" animation="property: scale; to: 1 1 1; dur: 1500; easing: easeOutElastic; startEvents: markerFound">
+            
+            <a-torus-knot 
+                position="0 1 0" 
+                radius="0.5" 
+                radius-tubular="0.08" 
+                p="2" q="3"
+                material="color: #FFD700; metalness: 1; roughness: 0.15; sphericalEnvMap: #sparkle;"
+                animation="property: rotation; to: 0 360 0; dur: 8000; loop: true; easing: linear">
+            </a-torus-knot>
+
+            <a-ring radius-inner="1" radius-outer="1.05" rotation="-90 0 0" material="color: white; shader: flat; opacity: 0.5"
+                animation="property: scale; dir: alternate; to: 1.1 1.1 1.1; dur: 1000; loop: true"></a-ring>
+            <a-ring radius-inner="1.2" radius-outer="1.22" rotation="-90 0 0" material="color: #ff0055; shader: flat; opacity: 0.8"></a-ring>
+
+            <a-entity position="0 2.2 0" animation="property: position; dir: alternate; to: 0 2.4 0; dur: 2000; loop: true; easing: easeInOutSine">
+                <a-text value="2026" align="center" width="10" color="#FFD700" 
+                        font="https://cdn.aframe.io/fonts/Exo2Bold.fnt"
+                        shader="msdf"
+                        negate="false">
+                </a-text>
+                <a-text value="HAPPY NEW YEAR" align="center" width="4" position="0 -0.4 0" color="#FFF" letter-spacing="2"></a-text>
             </a-entity>
-            <a-text value="Happy 2026!" position="0 1.5 0.5" align="center" color="yellow" scale="2 2 2"></a-text>
+
+            <a-entity id="fireworks-container" position="0 1 0"></a-entity>
+            
+            <a-circle rotation="-90 0 0" radius="1.5" material="src: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==); color: #FFD700; transparent: true; opacity: 0.2"></a-circle>
+
         </a-entity>
     </a-marker>
 
-    <a-entity light="type: ambient; intensity: 1;"></a-entity>
-    <a-entity light="type: directional; intensity: 1.5" position="1 1 1"></a-entity>
+    <a-entity camera></a-entity>
   </a-scene>
 
   <script>
+    const loader = document.getElementById('loader');
     const startBtn = document.getElementById('startBtn');
-    const openRsvp = document.getElementById('openRsvp');
+    const marker = document.getElementById('marker');
+    const fireworksContainer = document.getElementById('fireworks-container');
     const modal = document.getElementById('modal');
-    const closeModal = document.getElementById('closeModal');
-    const cancel = document.getElementById('cancel');
-    const form = document.getElementById('rsvpForm');
-    const marker = document.querySelector('#invMarker');
-    const loader = document.querySelector('.arjs-loader'); // Select the loader
+    
+    // 1. LOADING LOGIC
+    // Wait a moment to ensure AR.js is ready, then show start button
+    setTimeout(() => {
+        document.querySelector('.spinner').style.display = 'none';
+        startBtn.style.display = 'block';
+    }, 2000);
 
-    // RSVP Logic
-    openRsvp.addEventListener('click', ()=>{ modal.style.display = 'flex'; });
-    closeModal.addEventListener('click', ()=>{ modal.style.display = 'none'; });
-    cancel.addEventListener('click', ()=>{ modal.style.display = 'none'; });
-    form.addEventListener('submit', (e)=>{
-      e.preventDefault();
-      alert('RSVP Sent!');
-      modal.style.display = 'none';
-    });
-
-    // START BUTTON LOGIC
     startBtn.addEventListener('click', () => {
-        // 1. Hide the button
-        startBtn.style.display = 'none';
-        
-        // 2. FORCE HIDE THE LOADER
-        if (loader) {
-            loader.style.display = 'none';
-        }
-
-        // 3. Play audio here if you have it
-        // document.querySelector('#bgm').play().catch(e => console.log(e));
+        loader.style.opacity = '0';
+        setTimeout(() => { loader.style.display = 'none'; }, 500);
+        // Play music here if you add an <audio> tag
     });
+
+    // 2. RSVP UI LOGIC
+    document.getElementById('rsvpTrigger').addEventListener('click', () => modal.style.display = 'flex');
+    document.getElementById('closeModal').addEventListener('click', () => modal.style.display = 'none');
+    document.getElementById('submitRsvp').addEventListener('click', () => {
+        alert("Thank you! You are on the list.");
+        modal.style.display = 'none';
+    });
+
+    // 3. ADVANCED PARTICLE SYSTEM (THE "SKILLED" PART)
+    // This creates manual fireworks using A-Frame primitives
+    
+    function createFirework() {
+        if (!marker.object3D.visible) return; // Only fire if marker is seen
+
+        const color = Math.random() > 0.5 ? '#FFD700' : '#FF0055'; // Gold or Pink
+        const burstCount = 12;
+        
+        // Create a central burst point
+        const burstPos = {
+            x: (Math.random() - 0.5) * 1.5,
+            y: 0.5 + Math.random() * 1.5,
+            z: (Math.random() - 0.5) * 1.5
+        };
+
+        for (let i = 0; i < burstCount; i++) {
+            const particle = document.createElement('a-sphere');
+            particle.setAttribute('radius', '0.03');
+            particle.setAttribute('color', color);
+            particle.setAttribute('shader', 'flat');
+            particle.setAttribute('position', `${burstPos.x} ${burstPos.y} ${burstPos.z}`);
+            
+            // Random direction
+            const dirX = (Math.random() - 0.5) * 2;
+            const dirY = (Math.random() - 0.5) * 2;
+            const dirZ = (Math.random() - 0.5) * 2;
+
+            // Animation: Expand out and fade
+            particle.setAttribute('animation__move', `property: position; to: ${burstPos.x + dirX} ${burstPos.y + dirY} ${burstPos.z + dirZ}; dur: 1000; easing: easeOutQuad`);
+            particle.setAttribute('animation__fade', `property: material.opacity; from: 1; to: 0; dur: 1000; easing: easeInQuad`);
+            
+            fireworksContainer.appendChild(particle);
+
+            // Cleanup
+            setTimeout(() => {
+                particle.parentNode.removeChild(particle);
+            }, 1000);
+        }
+    }
+
+    // Fire a burst every 800ms when marker is found
+    let fireworkInterval;
+
+    marker.addEventListener('markerFound', () => {
+        const container = document.getElementById('mainContainer');
+        container.emit('markerFound'); // Trigger enter animation
+        fireworkInterval = setInterval(createFirework, 800);
+    });
+
+    marker.addEventListener('markerLost', () => {
+        clearInterval(fireworkInterval);
+    });
+
   </script>
 </body>
 </html>
