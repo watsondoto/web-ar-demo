@@ -3,277 +3,339 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>✨ NYE 2026 AR Experience</title>
+  <title>✨ 2026 New Year Portal</title>
 
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-  
   <script src="https://unpkg.com/aframe-extras@7.0.0/dist/aframe-extras.min.js"></script>
 
   <style>
-    /* --- DESIGN SYSTEM: LUXE DARK --- */
-    :root {
-      --gold: #FFD700;
-      --gold-dim: #C5A000;
-      --dark: #050505;
-      --glass: rgba(255, 255, 255, 0.05);
-      --border: rgba(255, 215, 0, 0.2);
-    }
-
-    body { 
-        margin: 0; 
-        overflow: hidden; 
-        font-family: 'Inter', sans-serif; 
-        background: var(--dark);
-        color: white;
-    }
-
-    /* CANVAS LAYERING */
-    .a-canvas { z-index: 1 !important; }
-    video { z-index: 0 !important; filter: brightness(0.8) contrast(1.2); } /* Cinematic camera look */
-
-    /* UI CONTAINER */
-    #ui-layer {
-        position: absolute; inset: 0; z-index: 10; pointer-events: none;
+    /* --- VIBE: GOLD + DEEP BLUE + NEON PURPLE --- */
+    body { margin: 0; overflow: hidden; background: #050510; font-family: 'Inter', sans-serif; }
+    
+    /* UI OVERLAY */
+    #overlay {
+        position: absolute; inset: 0; pointer-events: none; z-index: 10;
         display: flex; flex-direction: column; justify-content: space-between;
-        padding: 24px;
-    }
-
-    /* HEADER */
-    .header {
-        pointer-events: auto;
-        background: var(--glass);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 16px;
-        text-align: center;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-        transform: translateY(-100px);
-        animation: slideDown 1s ease forwards 0.5s;
+        padding: 20px;
     }
     
-    .header h1 { margin:0; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; color: var(--gold); }
-    .header p { margin:4px 0 0; font-size: 0.8rem; color: #aaa; }
+    .guide-text {
+        text-align: center; color: rgba(255,255,255,0.7); 
+        font-size: 14px; margin-top: 40px; text-transform: uppercase; letter-spacing: 2px;
+        text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+    }
 
-    /* BUTTONS */
-    .btn-group { pointer-events: auto; display: flex; gap: 12px; justify-content: center; margin-bottom: 20px; }
+    /* HIDDEN BLESSING MODAL */
+    #blessing-modal {
+        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+        width: 80%; max-width: 300px;
+        background: rgba(10, 10, 25, 0.95);
+        border: 1px solid #bc13fe; box-shadow: 0 0 30px rgba(188, 19, 254, 0.4);
+        padding: 30px; border-radius: 16px; text-align: center;
+        opacity: 0; pointer-events: none; transition: opacity 0.5s; z-index: 20;
+    }
+    #blessing-modal.visible { opacity: 1; pointer-events: auto; }
     
-    .btn {
-        background: var(--glass);
-        border: 1px solid var(--border);
-        color: var(--gold);
-        padding: 14px 28px;
-        border-radius: 50px;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        backdrop-filter: blur(4px);
+    .magic-text {
+        background: -webkit-linear-gradient(#FFD700, #ff6b6b);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        font-weight: 800; font-size: 24px; margin-bottom: 10px;
     }
-    .btn:hover { background: var(--gold); color: var(--dark); box-shadow: 0 0 20px var(--gold); }
-    .btn-primary { background: linear-gradient(135deg, var(--gold), var(--gold-dim)); color: black; border: none; }
 
-    /* LOADING OVERLAY */
-    #loader {
-        position: fixed; inset: 0; z-index: 9999;
-        background: radial-gradient(circle at center, #1a1a1a, #000);
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        transition: opacity 0.5s;
-    }
-    .spinner {
-        width: 50px; height: 50px;
-        border: 3px solid rgba(255,215,0,0.1);
-        border-top: 3px solid var(--gold);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin-bottom: 20px;
-    }
-    
-    /* MODAL */
-    #modal {
-        position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100;
-        display: none; align-items: center; justify-content: center;
-        backdrop-filter: blur(8px);
-    }
-    .modal-card {
-        background: #111; border: 1px solid var(--border);
-        padding: 30px; border-radius: 20px; width: 90%; max-width: 400px;
-        text-align: center;
-        box-shadow: 0 0 50px rgba(255, 215, 0, 0.1);
-    }
-    input { width: 100%; background: #222; border: 1px solid #333; padding: 12px; color: white; margin: 10px 0 20px; border-radius: 8px; outline: none; }
-    input:focus { border-color: var(--gold); }
-
-    /* ANIMATIONS */
+    /* LOADER */
+    .arjs-loader { display: flex; justify-content: center; align-items: center; background: #000; height: 100%; width: 100%; position: absolute; z-index: 9999; }
+    .loader-spinner { width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid #bc13fe; border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
-    @keyframes slideDown { to { transform: translateY(0); } }
   </style>
 </head>
 
 <body>
 
-  <div id="loader">
-    <div class="spinner"></div>
-    <div style="color:#666; font-size: 0.9rem; letter-spacing: 1px;">INITIALIZING AR ENGINE</div>
-    <button id="startBtn" class="btn btn-primary" style="margin-top: 30px; display: none;">ENTER EXPERIENCE</button>
+  <div class="arjs-loader" id="loader">
+    <div class="loader-spinner"></div>
   </div>
 
-  <div id="ui-layer">
-    <div class="header">
-      <h1>The Grand Celebration</h1>
-      <p>Scan the Hiro Marker</p>
-    </div>
-    <div class="btn-group">
-      <button class="btn" id="rsvpTrigger">RSVP Now</button>
+  <div id="overlay">
+    <div class="guide-text">Find the Hiro Marker</div>
+    <div style="text-align: center; color: #FFD700; font-size: 12px; margin-bottom: 20px; opacity: 0.6;">
+        TAP for Sparks • SHAKE for Pulse • LONG PRESS for Secret
     </div>
   </div>
 
-  <div id="modal">
-    <div class="modal-card">
-        <h2 style="color:var(--gold); margin-top:0">Join the Party</h2>
-        <p style="color:#ccc; font-size:0.9rem">Enter your name to confirm attendance.</p>
-        <input type="text" placeholder="Your Name" />
-        <div style="display:flex; gap:10px;">
-            <button class="btn" id="closeModal" style="flex:1; border-color:#444; color:#888;">Cancel</button>
-            <button class="btn btn-primary" id="submitRsvp" style="flex:1;">Confirm</button>
-        </div>
-    </div>
+  <div id="blessing-modal">
+    <div class="magic-text">🍀 LUCKY 2026</div>
+    <p style="color: #ddd; font-size: 14px; line-height: 1.5;">May your year be filled with unexpected joy, wealth, and endless creativity.</p>
+    <button onclick="closeBlessing()" style="margin-top:15px; background:none; border:1px solid #555; color:#aaa; padding:5px 15px; border-radius:20px;">Close</button>
   </div>
+
+  <audio id="sfx-whoosh" preload="auto"></audio>
+  <audio id="sfx-tick" preload="auto"></audio>
+  <audio id="sfx-boom" preload="auto"></audio>
 
   <a-scene 
-    embedded
+    embedded 
     vr-mode-ui="enabled: false"
-    renderer="logarithmicDepthBuffer: true; colorManagement: true; antialias: true;"
-    arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best;">
+    renderer="logarithmicDepthBuffer: true; colorManagement: true;"
+    arjs="sourceType: webcam; debugUIEnabled: false;">
 
     <a-assets>
-        <img id="sparkle" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="> </a-assets>
+        <img id="crack-tex" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAIklEQVQIW2BkQAKMQAJHgHgQAABGwAB52y8Q4AAAAABJRU5ErkJggg=="> </a-assets>
 
-    <a-entity light="type: ambient; color: #ffffff; intensity: 0.3"></a-entity>
-    <a-entity light="type: directional; color: #FFD700; intensity: 1.5; castShadow: true" position="-1 2 1"></a-entity>
-    <a-entity light="type: point; color: #ff0055; intensity: 2; distance: 10" position="0 2 0" 
-              animation="property: intensity; dir: alternate; dur: 200; to: 0.5; loop: true"></a-entity>
+    <a-entity light="type: ambient; color: #101030; intensity: 0.5"></a-entity>
+    <a-entity light="type: directional; color: #FFD700; intensity: 1.5" position="-1 4 2"></a-entity>
+    <a-entity light="type: point; color: #bc13fe; intensity: 0; distance: 5" position="0 0.5 0" id="portal-light"></a-entity>
 
-    <a-marker preset="hiro" id="marker">
-        
-        <a-entity id="mainContainer" scale="0 0 0" animation="property: scale; to: 1 1 1; dur: 1500; easing: easeOutElastic; startEvents: markerFound">
+    <a-marker preset="hiro" id="main-marker">
+      <a-entity id="stage-root" scale="0 0 0"> <a-entity id="stage1-group">
+            <a-image src="#crack-tex" rotation="-90 0 0" scale="3 3 1" opacity="0" id="ground-cracks"
+                     animation="property: opacity; to: 0.8; dur: 2000; startEvents: start-cracks"></a-image>
             
-            <a-torus-knot 
-                position="0 1 0" 
-                radius="0.5" 
-                radius-tubular="0.08" 
-                p="2" q="3"
-                material="color: #FFD700; metalness: 1; roughness: 0.15; sphericalEnvMap: #sparkle;"
-                animation="property: rotation; to: 0 360 0; dur: 8000; loop: true; easing: linear">
-            </a-torus-knot>
-
-            <a-ring radius-inner="1" radius-outer="1.05" rotation="-90 0 0" material="color: white; shader: flat; opacity: 0.5"
-                animation="property: scale; dir: alternate; to: 1.1 1.1 1.1; dur: 1000; loop: true"></a-ring>
-            <a-ring radius-inner="1.2" radius-outer="1.22" rotation="-90 0 0" material="color: #ff0055; shader: flat; opacity: 0.8"></a-ring>
-
-            <a-entity position="0 2.2 0" animation="property: position; dir: alternate; to: 0 2.4 0; dur: 2000; loop: true; easing: easeInOutSine">
-                <a-text value="2026" align="center" width="10" color="#FFD700" 
-                        font="https://cdn.aframe.io/fonts/Exo2Bold.fnt"
-                        shader="msdf"
-                        negate="false">
-                </a-text>
-                <a-text value="HAPPY NEW YEAR" align="center" width="4" position="0 -0.4 0" color="#FFF" letter-spacing="2"></a-text>
-            </a-entity>
-
-            <a-entity id="fireworks-container" position="0 1 0"></a-entity>
+            <a-ring radius-inner="0.9" radius-outer="1.0" rotation="-90 0 0" color="#bc13fe" opacity="0" id="portal-ring-1"
+                    material="shader: flat; transparent: true; blending: additive"
+                    animation="property: rotation; to: -90 360 0; dur: 3000; loop: true; easing: linear"
+                    animation__fade="property: opacity; to: 1; dur: 1000; startEvents: start-portal"></a-ring>
             
-            <a-circle rotation="-90 0 0" radius="1.5" material="src: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==); color: #FFD700; transparent: true; opacity: 0.2"></a-circle>
-
+            <a-ring radius-inner="1.1" radius-outer="1.15" rotation="-90 0 0" color="#00f3ff" opacity="0" id="portal-ring-2"
+                    material="shader: flat; transparent: true; blending: additive"
+                    animation="property: rotation; to: -90 -360 0; dur: 5000; loop: true; easing: linear"
+                    animation__fade="property: opacity; to: 0.6; dur: 1500; startEvents: start-portal"></a-ring>
         </a-entity>
+
+        <a-entity position="0 1.5 0" id="stage2-group">
+            <a-text value="" align="center" width="10" color="#FFD700" 
+                    font="https://cdn.aframe.io/fonts/Exo2Bold.fnt" shader="msdf" id="countdown-text"
+                    scale="0 0 0"></a-text>
+        </a-entity>
+
+        <a-entity id="stage3-group" visible="false">
+            <a-text value="2026" align="center" width="12" position="0 1.5 0" color="#fff"
+                    font="https://cdn.aframe.io/fonts/Exo2Bold.fnt" shader="msdf"
+                    animation="property: position; dir: alternate; to: 0 1.7 0; dur: 2000; loop: true"></a-text>
+            
+            <a-plane position="0 1.5 -0.1" width="3" height="1" color="#bc13fe" 
+                     material="shader: flat; opacity: 0.3; transparent: true; blending: additive"
+                     animation="property: scale; dir: alternate; to: 1.2 1.2 1; dur: 500; loop: true"></a-plane>
+        </a-entity>
+
+        <a-entity id="stage4-group" position="0 0.5 0.5" visible="false">
+            <a-text value="Your New Chapter\nStarts Now" align="center" width="4" color="#00f3ff"
+                    opacity="0" animation="property: opacity; to: 1; dur: 2000; delay: 500"></a-text>
+        </a-entity>
+
+        <a-entity id="particle-system"></a-entity>
+
+      </a-entity>
     </a-marker>
 
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
+    // --- VARIABLES ---
+    const marker = document.getElementById('main-marker');
+    const stageRoot = document.getElementById('stage-root');
+    const particleSys = document.getElementById('particle-system');
     const loader = document.getElementById('loader');
-    const startBtn = document.getElementById('startBtn');
-    const marker = document.getElementById('marker');
-    const fireworksContainer = document.getElementById('fireworks-container');
-    const modal = document.getElementById('modal');
     
-    // 1. LOADING LOGIC
-    // Wait a moment to ensure AR.js is ready, then show start button
-    setTimeout(() => {
-        document.querySelector('.spinner').style.display = 'none';
-        startBtn.style.display = 'block';
-    }, 2000);
-
-    startBtn.addEventListener('click', () => {
-        loader.style.opacity = '0';
-        setTimeout(() => { loader.style.display = 'none'; }, 500);
-        // Play music here if you add an <audio> tag
-    });
-
-    // 2. RSVP UI LOGIC
-    document.getElementById('rsvpTrigger').addEventListener('click', () => modal.style.display = 'flex');
-    document.getElementById('closeModal').addEventListener('click', () => modal.style.display = 'none');
-    document.getElementById('submitRsvp').addEventListener('click', () => {
-        alert("Thank you! You are on the list.");
-        modal.style.display = 'none';
-    });
-
-    // 3. ADVANCED PARTICLE SYSTEM (THE "SKILLED" PART)
-    // This creates manual fireworks using A-Frame primitives
+    // Audio Refs (Simulated)
+    const audioWhoosh = document.getElementById('sfx-whoosh');
+    const audioTick = document.getElementById('sfx-tick');
     
-    function createFirework() {
-        if (!marker.object3D.visible) return; // Only fire if marker is seen
+    let hasStarted = false;
 
-        const color = Math.random() > 0.5 ? '#FFD700' : '#FF0055'; // Gold or Pink
-        const burstCount = 12;
-        
-        // Create a central burst point
-        const burstPos = {
-            x: (Math.random() - 0.5) * 1.5,
-            y: 0.5 + Math.random() * 1.5,
-            z: (Math.random() - 0.5) * 1.5
-        };
-
-        for (let i = 0; i < burstCount; i++) {
-            const particle = document.createElement('a-sphere');
-            particle.setAttribute('radius', '0.03');
-            particle.setAttribute('color', color);
-            particle.setAttribute('shader', 'flat');
-            particle.setAttribute('position', `${burstPos.x} ${burstPos.y} ${burstPos.z}`);
-            
-            // Random direction
-            const dirX = (Math.random() - 0.5) * 2;
-            const dirY = (Math.random() - 0.5) * 2;
-            const dirZ = (Math.random() - 0.5) * 2;
-
-            // Animation: Expand out and fade
-            particle.setAttribute('animation__move', `property: position; to: ${burstPos.x + dirX} ${burstPos.y + dirY} ${burstPos.z + dirZ}; dur: 1000; easing: easeOutQuad`);
-            particle.setAttribute('animation__fade', `property: material.opacity; from: 1; to: 0; dur: 1000; easing: easeInQuad`);
-            
-            fireworksContainer.appendChild(particle);
-
-            // Cleanup
-            setTimeout(() => {
-                particle.parentNode.removeChild(particle);
-            }, 1000);
-        }
-    }
-
-    // Fire a burst every 800ms when marker is found
-    let fireworkInterval;
+    // --- INITIALIZATION ---
+    window.addEventListener('load', () => {
+        setTimeout(() => { loader.style.display = 'none'; }, 1000);
+    });
 
     marker.addEventListener('markerFound', () => {
-        const container = document.getElementById('mainContainer');
-        container.emit('markerFound'); // Trigger enter animation
-        fireworkInterval = setInterval(createFirework, 800);
+        if (!hasStarted) {
+            hasStarted = true;
+            runSequence();
+        }
+        // Snap scale up
+        stageRoot.setAttribute('animation', 'property: scale; to: 1 1 1; dur: 1000; easing: easeOutElastic');
     });
 
     marker.addEventListener('markerLost', () => {
-        clearInterval(fireworkInterval);
+        // Optional: Pause logic or reset
     });
+
+    // --- SEQUENCER ---
+    function runSequence() {
+        console.log("🎬 DIRECTOR: Action!");
+
+        // STAGE 1: PORTAL (0s)
+        document.getElementById('ground-cracks').emit('start-cracks');
+        document.getElementById('portal-ring-1').emit('start-portal');
+        document.getElementById('portal-ring-2').emit('start-portal');
+        
+        // Pulse Light
+        const light = document.getElementById('portal-light');
+        light.setAttribute('animation', 'property: intensity; to: 2; dur: 2000; easing: easeInQuad');
+        
+        // playSound(audioWhoosh);
+
+        // STAGE 2: COUNTDOWN (Starts at 3s)
+        setTimeout(() => {
+            startCountdown(10);
+        }, 3000);
+    }
+
+    function startCountdown(num) {
+        const textEl = document.getElementById('countdown-text');
+        
+        let count = num;
+        
+        const interval = setInterval(() => {
+            if (count > 0) {
+                // Update Text
+                textEl.setAttribute('value', count);
+                // Pop Animation
+                textEl.setAttribute('scale', '1 1 1');
+                textEl.setAttribute('animation', 'property: scale; from: 2 2 2; to: 1 1 1; dur: 300; easing: easeOutBack');
+                
+                // Sparkle Burst
+                spawnParticles(0, 1.5, 0, '#FFD700', 5);
+                // playSound(audioTick);
+                
+                count--;
+            } else {
+                clearInterval(interval);
+                triggerReveal();
+            }
+        }, 1000); // 1 second beat
+    }
+
+    // STAGE 3 & 4: REVEAL
+    function triggerReveal() {
+        // Hide Countdown
+        document.getElementById('stage2-group').setAttribute('visible', 'false');
+
+        // Show 2026
+        const s3 = document.getElementById('stage3-group');
+        s3.setAttribute('visible', 'true');
+        s3.setAttribute('animation', 'property: scale; from: 0 0 0; to: 1 1 1; dur: 1500; easing: easeOutElastic');
+
+        // Massive Fireworks
+        let fwCount = 0;
+        const fwInterval = setInterval(() => {
+            spawnParticles((Math.random()-0.5)*2, 2 + Math.random(), (Math.random()-0.5)*2, getRandomColor(), 15);
+            fwCount++;
+            if(fwCount > 10) clearInterval(fwInterval); // Stop auto-fireworks after 10 bursts
+        }, 600);
+
+        // Start Confetti Rain
+        startConfetti();
+
+        // Show Message (Stage 4)
+        setTimeout(() => {
+            document.getElementById('stage4-group').setAttribute('visible', 'true');
+        }, 2000);
+    }
+
+    // --- INTERACTION FEATURES ---
+
+    // 1. TAP for FIREWORKS
+    document.addEventListener('click', (e) => {
+        // Only trigger if experience has started
+        if(hasStarted) {
+            spawnParticles((Math.random()-0.5), 1.5, (Math.random()-0.5), getRandomColor(), 10);
+        }
+    });
+
+    // 2. SHAKE DETECTION (Simple Accelerometer)
+    let lastX, lastY, lastZ;
+    let lastUpdate = 0;
+    const SHAKE_THRESHOLD = 15;
+
+    window.addEventListener('devicemotion', (event) => {
+        const current = event.accelerationIncludingGravity;
+        if(!current) return;
+        
+        const time = new Date().getTime();
+        if ((time - lastUpdate) > 100) {
+            const diffTime = time - lastUpdate;
+            lastUpdate = time;
+
+            const speed = Math.abs(current.x + current.y + current.z - lastX - lastY - lastZ) / diffTime * 10000;
+
+            if (speed > SHAKE_THRESHOLD) {
+                // SHAKE DETECTED -> Pulse Portal
+                const r1 = document.getElementById('portal-ring-1');
+                if(r1) r1.setAttribute('color', '#fff');
+                setTimeout(() => { if(r1) r1.setAttribute('color', '#bc13fe'); }, 300);
+            }
+
+            lastX = current.x;
+            lastY = current.y;
+            lastZ = current.z;
+        }
+    });
+
+    // 3. LONG PRESS for SECRET BLESSING
+    let pressTimer;
+    document.addEventListener('touchstart', () => {
+        pressTimer = setTimeout(() => {
+            document.getElementById('blessing-modal').classList.add('visible');
+        }, 1000); // 1 second hold
+    });
+    document.addEventListener('touchend', () => {
+        clearTimeout(pressTimer);
+    });
+
+    function closeBlessing() {
+        document.getElementById('blessing-modal').classList.remove('visible');
+    }
+
+    // --- UTILS: PARTICLE ENGINE ---
+    function spawnParticles(x, y, z, color, count) {
+        for(let i=0; i<count; i++) {
+            const p = document.createElement('a-plane');
+            p.setAttribute('position', `${x} ${y} ${z}`);
+            p.setAttribute('scale', '0.05 0.05 0.05');
+            p.setAttribute('color', color);
+            p.setAttribute('material', 'shader: flat; side: double');
+            
+            // Random Velocity
+            const vx = (Math.random() - 0.5) * 2;
+            const vy = (Math.random() - 0.5) * 2;
+            const vz = (Math.random() - 0.5) * 2;
+            
+            p.setAttribute('animation__pos', `property: position; to: ${x+vx} ${y+vy} ${z+vz}; dur: 1000; easing: easeOutQuad`);
+            p.setAttribute('animation__fade', `property: opacity; from: 1; to: 0; dur: 1000`);
+            
+            particleSys.appendChild(p);
+            
+            setTimeout(() => { particleSys.removeChild(p); }, 1000);
+        }
+    }
+
+    function startConfetti() {
+        setInterval(() => {
+            const p = document.createElement('a-plane');
+            const x = (Math.random() - 0.5) * 2;
+            const z = (Math.random() - 0.5) * 2;
+            p.setAttribute('position', `${x} 3 ${z}`); // Start high
+            p.setAttribute('scale', '0.03 0.06 0.03');
+            p.setAttribute('color', getRandomColor());
+            p.setAttribute('rotation', `${Math.random()*360} ${Math.random()*360} 0`);
+            
+            // Fall animation
+            p.setAttribute('animation', `property: position; to: ${x} 0 ${z}; dur: 3000; easing: linear`);
+            // Spin animation
+            p.setAttribute('animation__spin', `property: rotation; to: ${Math.random()*360} ${Math.random()*360} 0; dur: 3000; easing: linear`);
+
+            particleSys.appendChild(p);
+            setTimeout(() => { if(p.parentNode) p.parentNode.removeChild(p); }, 3000);
+        }, 100);
+    }
+
+    function getRandomColor() {
+        const colors = ['#FFD700', '#00f3ff', '#bc13fe', '#ffffff'];
+        return colors[Math.floor(Math.random() * colors.length)];
+    }
 
   </script>
 </body>
