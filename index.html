@@ -1,111 +1,142 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>AR Debug Mode</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>✨ 2026 GOLD EDITION ✨</title>
+
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+  
+  <script src="https://unpkg.com/aframe-particle-system-component@1.1.3/dist/aframe-particle-system-component.min.js"></script>
+  <script src="https://unpkg.com/aframe-environment-component@1.3.3/dist/aframe-environment-component.min.js"></script>
+
+  <style>
+    /* PRETTY UI */
+    body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Roboto, sans-serif; background: #000; }
     
-    <style>
-      body { margin: 0; overflow: hidden; font-family: sans-serif; }
-      
-      /* Full screen loader */
-      #loader {
+    #overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.9); z-index: 9999;
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        color: white; text-align: center;
-      }
+        background: radial-gradient(circle at center, rgba(20,20,30,0.9), #000);
+        z-index: 9999; display: flex; flex-direction: column; 
+        justify-content: center; align-items: center; text-align: center;
+        transition: opacity 0.5s;
+    }
+
+    h1 { color: #ffd700; font-size: 2.5rem; margin: 0; text-shadow: 0 0 20px #ffaa00; }
+    p { color: #ccc; margin-top: 10px; font-size: 1.1rem; }
+
+    #startBtn {
+        margin-top: 30px; padding: 15px 40px; font-size: 18px; font-weight: bold;
+        background: linear-gradient(135deg, #ffd700, #ffaa00);
+        border: none; border-radius: 50px; cursor: pointer;
+        box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
+        transform: scale(1); transition: transform 0.2s;
+    }
+    #startBtn:active { transform: scale(0.95); }
+
+    /* WATERMARK */
+    .watermark { position: absolute; bottom: 20px; width: 100%; text-align: center; color: rgba(255,255,255,0.3); font-size: 12px; pointer-events: none; z-index: 10; }
+  </style>
+</head>
+
+<body>
+
+  <div id="overlay">
+    <h1>✨ 2026 ✨</h1>
+    <p>Ready for the Golden Celebration?</p>
+    <button id="startBtn">ENTER PARTY</button>
+  </div>
+
+  <div class="watermark">Point camera at HIRO marker</div>
+
+  <a-scene 
+    embedded
+    vr-mode-ui="enabled: false"
+    renderer="logarithmicDepthBuffer: true; colorManagement: true; physicallyCorrectLights: true; antialias: true;"
+    arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best;">
+
+    <a-assets>
+      <img id="sky" src="https://live.staticflickr.com/65535/53416049289_115d9a5b51_k.jpg" crossorigin="anonymous">
+    </a-assets>
+
+    <a-marker preset="hiro" smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5">
       
-      /* Visual Debug Log for Mobile */
-      #debug-log {
-        position: fixed; top: 0; left: 0; width: 100%; max-height: 200px;
-        background: rgba(255, 0, 0, 0.5); color: white; 
-        z-index: 10000; pointer-events: none; overflow-y: auto;
-        font-size: 12px; padding: 5px;
-      }
+      <a-entity position="0 0 0" rotation="-90 0 0">
 
-      button {
-        padding: 15px 30px; font-size: 18px; cursor: pointer;
-        background: #ffd166; border: none; border-radius: 8px; margin-top: 20px;
-      }
-    </style>
-  </head>
+        <a-entity light="type: ambient; color: #444; intensity: 1.5"></a-entity>
+        <a-entity light="type: point; color: #8800ff; intensity: 5; distance: 10" position="-2 2 2"></a-entity>
+        <a-entity light="type: point; color: #ffaa00; intensity: 5; distance: 10" position="2 -2 3"></a-entity>
 
-  <body style="margin : 0px; overflow: hidden;">
+        <a-torus radius="1.2" radius-tubular="0.05" 
+                 material="color: #ffd700; metalness: 1; roughness: 0.1;"
+                 animation="property: rotation; to: 0 360 0; dur: 8000; loop: true; easing: linear">
+        </a-torus>
 
-    <div id="debug-log">Status: Initializing...<br></div>
+        <a-torus radius="0.9" radius-tubular="0.03" 
+                 material="color: #c0c0c0; metalness: 1; roughness: 0.1;"
+                 rotation="45 0 0"
+                 animation="property: rotation; to: 45 -360 0; dur: 6000; loop: true; easing: linear">
+        </a-torus>
 
-    <div id="loader">
-      <h2 id="status-text">Requesting Camera...</h2>
-      <p>If this takes more than 5 seconds, check the Red Log above.</p>
-      <button id="force-start" style="display:none" onclick="hideLoader()">Force Enter</button>
-    </div>
+        <a-octahedron position="0 0 0" radius="0.4"
+                      material="color: #ff0055; metalness: 0.9; roughness: 0.1; opacity: 0.9"
+                      animation="property: rotation; to: 360 360 0; dur: 4000; loop: true; easing: linear"
+                      animation__bounce="property: position; dir: alternate; to: 0 0 0.5; dur: 2000; loop: true">
+        </a-octahedron>
 
-    <a-scene 
-      embedded 
-      arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
-      vr-mode-ui="enabled: false"
-      renderer="logarithmicDepthBuffer: true;">
+        <a-entity position="0 -1.5 0.5" rotation="0 0 0">
+           <a-text value="HAPPY" align="center" position="0 0.4 0" width="6" 
+                   font="mozillavr" color="#ffffff"
+                   material="shader: standard; emissive: #ffffff; emissiveIntensity: 0.5"></a-text>
+           
+           <a-text value="2026" align="center" position="0 -0.4 0" width="10" 
+                   font="exo2bold" color="#ffd700"
+                   material="shader: standard; metalness: 1; roughness: 0.2"></a-text>
+        </a-entity>
 
-      <a-marker preset="hiro">
-         <a-box position="0 0.5 0" material="color: yellow; opacity: 0.8;"></a-box>
-         <a-text value="IT WORKS!" position="0 1.2 0" align="center" color="red" scale="2 2 2"></a-text>
-      </a-marker>
+        <a-entity particle-system="
+            preset: dust; 
+            texture: https://cdn.aframe.io/s/particle-texture.jpg;
+            color: #ffd700, #ffffff; 
+            particleCount: 1000; 
+            size: 0.5; 
+            velocityValue: 0 1 0; 
+            positionSpread: 1 1 1; 
+            maxAge: 2;" 
+            position="0 0 0">
+        </a-entity>
 
-      <a-entity camera></a-entity>
-    </a-scene>
+        <a-entity particle-system="
+            preset: fireworks; 
+            color: #ff0055, #00ffff, #ffd700; 
+            particleCount: 500; 
+            velocityValue: 2 2 2; 
+            size: 1.5;" 
+            position="0 1 0">
+        </a-entity>
 
-    <script>
-      const logBox = document.getElementById('debug-log');
-      const loader = document.getElementById('loader');
-      const forceBtn = document.getElementById('force-start');
-      const statusText = document.getElementById('status-text');
+      </a-entity>
+    </a-marker>
 
-      function log(msg) {
-        logBox.innerHTML += msg + "<br>";
-        console.log(msg);
-      }
+    <a-entity camera></a-entity>
+  </a-scene>
 
-      function hideLoader() {
-        loader.style.display = 'none';
-        log("Loader hidden by user/script.");
-      }
+  <script>
+    const overlay = document.getElementById('overlay');
+    const startBtn = document.getElementById('startBtn');
 
-      // 1. Check if we are on HTTPS
-      if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-        log("❌ CRITICAL ERROR: You are not using HTTPS. Camera will be blocked.");
-        statusText.innerText = "ERROR: Site must be HTTPS";
-        alert("AR requires HTTPS! The camera will not open.");
-      } else {
-        log("✅ HTTPS/Localhost detected.");
-      }
-
-      // 2. Listen for Scene Loaded
-      const scene = document.querySelector('a-scene');
-      
-      scene.addEventListener('loaded', () => {
-        log("✅ A-Frame Scene Loaded!");
-        statusText.innerText = "Scene Ready!";
-        // Show button to let user enter manually if they want
-        forceBtn.style.display = 'block'; 
-        // Auto-hide after 1 second
-        setTimeout(() => {
-             hideLoader();
-        }, 1000);
-      });
-
-      scene.addEventListener('camera-error', (e) => {
-        log("❌ Camera Error: " + JSON.stringify(e));
-        statusText.innerText = "Camera Access Denied";
-      });
-
-      // 3. Fallback Timeout
+    startBtn.addEventListener('click', () => {
+      // Fade out overlay
+      overlay.style.opacity = '0';
       setTimeout(() => {
-        if (loader.style.display !== 'none') {
-          log("⚠️ Timeout: Scene took too long. Showing Force Button.");
-          forceBtn.style.display = 'block';
-        }
-      }, 5000);
-    </script>
-  </body>
+        overlay.style.display = 'none';
+      }, 500);
+
+      // Play music here if needed
+      // const audio = new Audio('path/to/music.mp3');
+      // audio.play();
+    });
+  </script>
+</body>
 </html>
