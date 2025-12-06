@@ -1,308 +1,80 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>WebXR AR - Real Surface Detection</title>
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>New Year Marker AR — AR.js + A-Frame</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <!-- A-Frame -->
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <!-- AR.js aframe build -->
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-            background: black;
-        }
-        #info {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 25px;
-            z-index: 1000;
-            font-size: 16px;
-            text-align: center;
-            max-width: 90%;
-        }
-        #ar-button {
-            position: fixed;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 20px 40px;
-            font-size: 18px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            z-index: 1000;
-        }
-        #ar-button:disabled {
-            background: #666;
-            cursor: not-allowed;
-        }
+      body { margin: 0; overflow: hidden; }
+      #info { position: absolute; left: 10px; top: 10px; z-index: 2; color: white; font-family: sans-serif; background: rgba(0,0,0,0.4); padding: 6px 10px; border-radius: 6px;}
     </style>
-</head>
-<body>
-    <div id="info">🎭 Point at surfaces and tap to place characters!</div>
-    <button id="ar-button">Start AR</button>
+  </head>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <body>
+    <div id="info">Point the camera at the Hiro marker (or use custom pattern).</div>
 
-    <script type="module">
-        let container;
-        let camera, scene, renderer;
-        let controller;
-        let reticle;
-        let hitTestSource = null;
-        let hitTestSourceRequested = false;
-        let characters = [];
+    <a-scene
+      vr-mode-ui="enabled: false"
+      embedded
+      arjs="sourceType: webcam; debugUIEnabled: false;"
+      renderer="logarithmicDepthBuffer: true;"
+    >
+      <!-- Camera -->
+      <a-entity camera></a-entity>
 
-        init();
+      <!-- Marker: preset "hiro". For custom marker use: type="pattern" url="path/to/your.patt" -->
+      <a-marker preset="hiro" id="ny-marker">
+        <!-- A simple 3D glTF model anchored to the marker -->
+        <!-- Replace the src with your hosted newyear.gltf (must be CORS-enabled) -->
+        <a-entity id="newyear"
+                  gltf-model="#gltfModel"
+                  scale="0.7 0.7 0.7"
+                  position="0 0 0"
+                  visible="false"
+                  animation="property: position; to: 0 0.12 0; dir: alternate; dur: 900; loop: true; easing: easeInOutSine">
+        </a-entity>
 
-        function init() {
-            container = document.createElement('div');
-            document.body.appendChild(container);
+        <!-- Optional: simple text/celebration built with A-Frame primitives -->
+        <a-entity position="0 0.4 0" rotation="-90 0 0" visible="false" id="sparkles">
+          <a-text value="🎉 Happy New Year! 🎊"
+                  align="center"
+                  width="2"
+                  color="#ffd700">
+          </a-text>
+        </a-entity>
 
-            scene = new THREE.Scene();
+      </a-marker>
 
-            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+      <!-- Add the model asset -->
+      <a-assets>
+        <!-- Provide your glTF file (or host a small one). Example uses a placeholder id only; update src to your file URL -->
+        <a-asset-item id="gltfModel" src="https://example.com/models/newyear.gltf"></a-asset-item>
+      </a-assets>
 
-            // Lighting
-            const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
-            light.position.set(0.5, 1, 0.25);
-            scene.add(light);
+      <!-- A small ground plane so the scene is not empty if marker missing -->
+      <a-entity light="type: ambient; intensity: 0.8"></a-entity>
+      <a-entity light="type: directional; intensity: 0.5" position="0 1 0"></a-entity>
+    </a-scene>
 
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-            directionalLight.position.set(5, 10, 5);
-            scene.add(directionalLight);
+    <script>
+      // Show/hide content when marker is detected / lost
+      const marker = document.querySelector('#ny-marker');
+      const model = document.querySelector('#newyear');
+      const sparkles = document.querySelector('#sparkles');
 
-            // Renderer
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setPixelRatio(window.devicePixelRatio);
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.xr.enabled = true;
-            container.appendChild(renderer.domElement);
+      marker.addEventListener('markerFound', () => {
+        model.setAttribute('visible', 'true');
+        sparkles.setAttribute('visible', 'true');
+      });
 
-            // AR Button
-            const button = document.getElementById('ar-button');
-            
-            if ('xr' in navigator) {
-                navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
-                    if (supported) {
-                        button.addEventListener('click', onARButtonClick);
-                    } else {
-                        button.disabled = true;
-                        button.textContent = 'AR Not Supported';
-                    }
-                });
-            } else {
-                button.disabled = true;
-                button.textContent = 'WebXR Not Available';
-            }
-
-            // Controller for tap/select events
-            controller = renderer.xr.getController(0);
-            controller.addEventListener('select', onSelect);
-            scene.add(controller);
-
-            // Reticle (the circle that shows where you can place)
-            reticle = new THREE.Mesh(
-                new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2),
-                new THREE.MeshBasicMaterial({ color: 0x00ff00 })
-            );
-            reticle.matrixAutoUpdate = false;
-            reticle.visible = false;
-            scene.add(reticle);
-
-            // Window resize
-            window.addEventListener('resize', onWindowResize);
-
-            // Start animation loop
-            renderer.setAnimationLoop(animate);
-        }
-
-        async function onARButtonClick() {
-            const button = document.getElementById('ar-button');
-            
-            if (!renderer.xr.isPresenting) {
-                try {
-                    const session = await navigator.xr.requestSession('immersive-ar', {
-                        requiredFeatures: ['hit-test']
-                    });
-                    
-                    await renderer.xr.setSession(session);
-                    button.textContent = 'Exit AR';
-                    
-                    session.addEventListener('end', () => {
-                        button.textContent = 'Start AR';
-                        hitTestSourceRequested = false;
-                        hitTestSource = null;
-                    });
-                } catch (error) {
-                    console.error('Error starting AR:', error);
-                    alert('Could not start AR. Please ensure you are using HTTPS and have granted camera permissions.');
-                }
-            } else {
-                await renderer.xr.getSession().end();
-            }
-        }
-
-        function createCharacter() {
-            const character = new THREE.Group();
-            const scale = 0.15; // Small size
-            
-            // Body
-            const bodyGeom = new THREE.CylinderGeometry(0.15 * scale, 0.2 * scale, 0.5 * scale, 8);
-            const bodyMat = new THREE.MeshPhongMaterial({ color: 0x4CAF50 });
-            const body = new THREE.Mesh(bodyGeom, bodyMat);
-            body.position.y = 0.25 * scale;
-            character.add(body);
-            
-            // Head
-            const headGeom = new THREE.SphereGeometry(0.15 * scale, 16, 16);
-            const headMat = new THREE.MeshPhongMaterial({ color: 0xFFD700 });
-            const head = new THREE.Mesh(headGeom, headMat);
-            head.position.y = 0.65 * scale;
-            character.add(head);
-            
-            // Eyes
-            const eyeGeom = new THREE.SphereGeometry(0.04 * scale, 8, 8);
-            const eyeMat = new THREE.MeshPhongMaterial({ color: 0x000000 });
-            const leftEye = new THREE.Mesh(eyeGeom, eyeMat);
-            leftEye.position.set(-0.06 * scale, 0.68 * scale, 0.13 * scale);
-            character.add(leftEye);
-            const rightEye = leftEye.clone();
-            rightEye.position.x = 0.06 * scale;
-            character.add(rightEye);
-            
-            // Arms
-            const armGeom = new THREE.CylinderGeometry(0.05 * scale, 0.04 * scale, 0.4 * scale, 8);
-            const armMat = new THREE.MeshPhongMaterial({ color: 0x4CAF50 });
-            const leftArm = new THREE.Mesh(armGeom, armMat);
-            leftArm.position.set(-0.25 * scale, 0.25 * scale, 0);
-            leftArm.rotation.z = 0.5;
-            character.add(leftArm);
-            
-            const rightArm = new THREE.Mesh(armGeom, armMat);
-            rightArm.position.set(0.25 * scale, 0.25 * scale, 0);
-            rightArm.rotation.z = -0.5;
-            character.add(rightArm);
-            
-            // Legs
-            const legGeom = new THREE.CylinderGeometry(0.06 * scale, 0.05 * scale, 0.4 * scale, 8);
-            const legMat = new THREE.MeshPhongMaterial({ color: 0x2196F3 });
-            const leftLeg = new THREE.Mesh(legGeom, legMat);
-            leftLeg.position.set(-0.1 * scale, -0.2 * scale, 0);
-            character.add(leftLeg);
-            
-            const rightLeg = new THREE.Mesh(legGeom, legMat);
-            rightLeg.position.set(0.1 * scale, -0.2 * scale, 0);
-            character.add(rightLeg);
-            
-            // Animation data
-            character.userData = {
-                leftArm: leftArm,
-                rightArm: rightArm,
-                leftLeg: leftLeg,
-                rightLeg: rightLeg,
-                head: head,
-                startTime: Date.now(),
-                scale: scale
-            };
-            
-            return character;
-        }
-
-        function onSelect() {
-            if (reticle.visible) {
-                const character = createCharacter();
-                
-                // Place character at reticle position with correct orientation
-                reticle.matrix.decompose(character.position, character.quaternion, character.scale);
-                
-                scene.add(character);
-                characters.push(character);
-                
-                document.getElementById('info').textContent = `🎉 ${characters.length} character(s) placed!`;
-            }
-        }
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        function animate(timestamp, frame) {
-            if (frame) {
-                const referenceSpace = renderer.xr.getReferenceSpace();
-                const session = renderer.xr.getSession();
-
-                // Request hit test source once
-                if (hitTestSourceRequested === false) {
-                    session.requestReferenceSpace('viewer').then((referenceSpace) => {
-                        session.requestHitTestSource({ space: referenceSpace }).then((source) => {
-                            hitTestSource = source;
-                        });
-                    });
-
-                    session.addEventListener('end', () => {
-                        hitTestSourceRequested = false;
-                        hitTestSource = null;
-                    });
-
-                    hitTestSourceRequested = true;
-                }
-
-                // Perform hit test
-                if (hitTestSource) {
-                    const hitTestResults = frame.getHitTestResults(hitTestSource);
-
-                    if (hitTestResults.length) {
-                        const hit = hitTestResults[0];
-                        reticle.visible = true;
-                        reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
-                    } else {
-                        reticle.visible = false;
-                    }
-                }
-            }
-
-            // Animate characters
-            characters.forEach(character => {
-                if (character.userData.startTime) {
-                    const t = (Date.now() - character.userData.startTime) / 1000;
-                    const scale = character.userData.scale;
-                    
-                    // Bounce
-                    character.position.y += Math.sin(t * 3) * 0.001;
-                    
-                    // Rotate
-                    character.rotation.y += 0.01;
-                    
-                    // Arms wave
-                    character.userData.leftArm.rotation.z = 0.5 + Math.sin(t * 4) * 0.6;
-                    character.userData.rightArm.rotation.z = -0.5 - Math.sin(t * 4) * 0.6;
-                    
-                    // Legs move
-                    character.userData.leftLeg.rotation.x = Math.sin(t * 4) * 0.3;
-                    character.userData.rightLeg.rotation.x = -Math.sin(t * 4) * 0.3;
-                    
-                    // Head bob
-                    character.userData.head.rotation.z = Math.sin(t * 3) * 0.15;
-                }
-            });
-
-            renderer.render(scene, camera);
-        }
+      marker.addEventListener('markerLost', () => {
+        model.setAttribute('visible', 'false');
+        sparkles.setAttribute('visible', 'false');
+      });
     </script>
-</body>
+  </body>
 </html>
