@@ -32,15 +32,8 @@
 
   <a-scene
     embedded
-    arjs="
-      sourceType: webcam; 
-      debugUIEnabled: false;
-      maxDetectionRate: 30;
-      sourceWidth: window.innerWidth;
-      sourceHeight: window.innerHeight;
-      displayWidth: window.innerWidth;
-      displayHeight: window.innerHeight;
-    "
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+    vr-mode-ui="enabled: false"
   >
 
     <!-- HIRO Marker -->
@@ -102,15 +95,5 @@
 
   </a-scene>
 
-  <!-- Fix camera zoom on window resize -->
-  <script>
-    window.addEventListener('resize', () => {
-      const sceneEl = document.querySelector('a-scene');
-      if (sceneEl && sceneEl.components['arjs']) {
-        sceneEl.components['arjs'].arSource.onResizeElement();
-        sceneEl.components['arjs'].arSource.copyElementSizeTo(sceneEl.renderer.domElement);
-      }
-    });
-  </script>
 </body>
 </html>
