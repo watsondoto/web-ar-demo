@@ -8,12 +8,14 @@
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   
-  <script src="https://unpkg.com/aframe-particle-system-component@1.1.3/dist/aframe-particle-system-component.min.js"></script>
-  <script src="https://unpkg.com/aframe-environment-component@1.3.3/dist/aframe-environment-component.min.js"></script>
-
   <style>
-    /* PRETTY UI */
-    body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Roboto, sans-serif; background: #000; }
+    /* CRITICAL FIX: Background must be transparent to see the video feed behind it */
+    body { 
+        margin: 0; 
+        overflow: hidden; 
+        font-family: 'Segoe UI', Roboto, sans-serif; 
+        background-color: transparent !important; 
+    }
     
     #overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -32,10 +34,10 @@
         border: none; border-radius: 50px; cursor: pointer;
         box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
         transform: scale(1); transition: transform 0.2s;
+        z-index: 10000; /* Ensure button is clickable */
     }
     #startBtn:active { transform: scale(0.95); }
 
-    /* WATERMARK */
     .watermark { position: absolute; bottom: 20px; width: 100%; text-align: center; color: rgba(255,255,255,0.3); font-size: 12px; pointer-events: none; z-index: 10; }
   </style>
 </head>
@@ -52,17 +54,13 @@
 
   <a-scene 
     embedded
-    vr-mode-ui="enabled: false"
-    renderer="logarithmicDepthBuffer: true; colorManagement: true; physicallyCorrectLights: true; antialias: true;"
-    arjs="sourceType: webcam; debugUIEnabled: false; trackingMethod: best;">
-
-    <a-assets>
-      <img id="sky" src="https://live.staticflickr.com/65535/53416049289_115d9a5b51_k.jpg" crossorigin="anonymous">
-    </a-assets>
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
+    renderer="logarithmicDepthBuffer: true; colorManagement: true;"
+    vr-mode-ui="enabled: false">
 
     <a-marker preset="hiro" smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5">
       
-      <a-entity position="0 0 0" rotation="-90 0 0">
+      <a-entity rotation="-90 0 0">
 
         <a-entity light="type: ambient; color: #444; intensity: 1.5"></a-entity>
         <a-entity light="type: point; color: #8800ff; intensity: 5; distance: 10" position="-2 2 2"></a-entity>
@@ -85,35 +83,11 @@
                       animation__bounce="property: position; dir: alternate; to: 0 0 0.5; dur: 2000; loop: true">
         </a-octahedron>
 
-        <a-entity position="0 -1.5 0.5" rotation="0 0 0">
+        <a-entity position="0 -1.5 0.5">
            <a-text value="HAPPY" align="center" position="0 0.4 0" width="6" 
-                   font="mozillavr" color="#ffffff"
-                   material="shader: standard; emissive: #ffffff; emissiveIntensity: 0.5"></a-text>
-           
+                   color="#ffffff"></a-text>
            <a-text value="2026" align="center" position="0 -0.4 0" width="10" 
-                   font="exo2bold" color="#ffd700"
-                   material="shader: standard; metalness: 1; roughness: 0.2"></a-text>
-        </a-entity>
-
-        <a-entity particle-system="
-            preset: dust; 
-            texture: https://cdn.aframe.io/s/particle-texture.jpg;
-            color: #ffd700, #ffffff; 
-            particleCount: 1000; 
-            size: 0.5; 
-            velocityValue: 0 1 0; 
-            positionSpread: 1 1 1; 
-            maxAge: 2;" 
-            position="0 0 0">
-        </a-entity>
-
-        <a-entity particle-system="
-            preset: fireworks; 
-            color: #ff0055, #00ffff, #ffd700; 
-            particleCount: 500; 
-            velocityValue: 2 2 2; 
-            size: 1.5;" 
-            position="0 1 0">
+                   color="#ffd700"></a-text>
         </a-entity>
 
       </a-entity>
@@ -127,15 +101,10 @@
     const startBtn = document.getElementById('startBtn');
 
     startBtn.addEventListener('click', () => {
-      // Fade out overlay
       overlay.style.opacity = '0';
       setTimeout(() => {
         overlay.style.display = 'none';
       }, 500);
-
-      // Play music here if needed
-      // const audio = new Audio('path/to/music.mp3');
-      // audio.play();
     });
   </script>
 </body>
