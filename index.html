@@ -1,20 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Advanced WebAR Portal</title>
+  <meta charset="utf-8" />
+  <title>WebAR Portal - Working</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- Three.js -->
   <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+
+  <!-- AR.js for Three.js -->
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/three.js/build/ar-threex.js"></script>
 
   <style>
-    body { margin: 0; overflow: hidden; }
-    #loading { position: fixed; color: white; top: 20px; left: 20px; }
+    body { margin:0; overflow:hidden; background:#000; }
+    #loading {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      color: white;
+      font-family: sans-serif;
+      z-index: 9999;
+    }
   </style>
 </head>
 <body>
-  <div id="loading">Loading AR...</div>
-  <script type="module" src="main.js"></script>
+  <div id="loading">Starting camera…</div>
+  <script src="main.js"></script>
 </body>
 </html>
