@@ -1,35 +1,92 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AR Test</title>
+    <title>2026 AR Party</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-    
+
     <style>
-        body { margin: 0; overflow: hidden; }
-        /* This forces the loading screen to hide if it gets stuck */
-        .arjs-loader { display: none !important; } 
+        /* CRITICAL FIX: Make body transparent so we see the camera behind it */
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: transparent !important;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Force video to be in background */
+        #arjs-video {
+            z-index: -1 !important;
+        }
+        
+        /* Overlay Style */
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 9999;
+            display: flex; flex-direction: column; 
+            justify-content: center; align-items: center;
+            color: white; font-family: sans-serif;
+            text-align: center;
+        }
+        
+        .btn {
+            background: #ff0055; color: white; padding: 15px 30px;
+            border: none; border-radius: 30px; font-size: 18px; font-weight: bold;
+            margin-top: 20px; cursor: pointer;
+        }
     </style>
+
+    <script>
+        function start() {
+            document.querySelector('.overlay').style.display = 'none';
+            // Trigger resize to help mobile browsers render the video
+            window.dispatchEvent(new Event('resize'));
+        }
+    </script>
 </head>
 
-<body style="margin: 0px; overflow: hidden;">
-    
+<body>
+
+    <div class="overlay">
+        <h1>AR PARTY 2026</h1>
+        <p>Ensure Camera Permissions are ON</p>
+        <button class="btn" onclick="start()">START CAMERA</button>
+        <p style="font-size: 12px; margin-top: 20px;">Point at Hiro Marker</p>
+    </div>
+
     <a-scene 
         embedded 
         arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono;"
         renderer="logarithmicDepthBuffer: true; colorManagement: true; alpha: true;"
         vr-mode-ui="enabled: false">
 
+        <a-assets>
+            <a-asset-item id="tree" src="https://vazxmixjsiawhamofees.supabase.co/storage/v1/object/public/models/tree-spruce/model.gltf"></a-asset-item>
+        </a-assets>
+
         <a-marker preset="hiro">
-            <a-box position="0 0.5 0" 
-                   material="color: red; opacity: 0.8;"
-                   animation="property: rotation; to: 0 360 0; dur: 2000; loop: true; easing: linear">
-            </a-box>
             
-            <a-text value="IT WORKS!" position="0 1.5 0" align="center" scale="2 2 2" color="yellow"></a-text>
+            <a-entity rotation="-90 0 0">
+                
+                <a-entity gltf-model="#tree" scale="4 4 4" shadow="receive: true"></a-entity>
+
+                <a-text value="2026" align="center" position="0 0.5 1.5" scale="2 2 2" color="#ffd700"></a-text>
+
+                <a-box color="yellow" position="0 1.6 0" scale="0.2 0.2 0.2"
+                       animation="property: rotation; to: 0 360 0; loop: true; dur: 3000"></a-box>
+
+                <a-entity light="type: ambient; intensity: 0.8;"></a-entity>
+                <a-entity light="type: directional; intensity: 1; position: -1 2 2;"></a-entity>
+
+            </a-entity>
         </a-marker>
 
         <a-entity camera></a-entity>
     </a-scene>
+
 </body>
 </html>
