@@ -2,31 +2,36 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  
   <title>✨ 2026 GOLD EDITION ✨</title>
 
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   
   <style>
-    /* CRITICAL FIX: Background must be transparent to see the video feed behind it */
-    body { 
-        margin: 0; 
-        overflow: hidden; 
-        font-family: 'Segoe UI', Roboto, sans-serif; 
-        background-color: transparent !important; 
+    html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden; /* Prevents scrollbars on mobile */
+        font-family: 'Segoe UI', Roboto, sans-serif;
+        background-color: transparent !important;
     }
     
+    /* Overlay Styles */
     #overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: radial-gradient(circle at center, rgba(20,20,30,0.9), #000);
+        background: radial-gradient(circle at center, rgba(20,20,30,0.95), #000);
         z-index: 9999; display: flex; flex-direction: column; 
         justify-content: center; align-items: center; text-align: center;
         transition: opacity 0.5s;
     }
 
     h1 { color: #ffd700; font-size: 2.5rem; margin: 0; text-shadow: 0 0 20px #ffaa00; }
-    p { color: #ccc; margin-top: 10px; font-size: 1.1rem; }
+    p { color: #ccc; margin-top: 10px; font-size: 1.1rem; padding: 0 20px; }
 
     #startBtn {
         margin-top: 30px; padding: 15px 40px; font-size: 18px; font-weight: bold;
@@ -34,11 +39,11 @@
         border: none; border-radius: 50px; cursor: pointer;
         box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
         transform: scale(1); transition: transform 0.2s;
-        z-index: 10000; /* Ensure button is clickable */
+        -webkit-tap-highlight-color: transparent; /* Removes blue tap box on Android/iOS */
     }
     #startBtn:active { transform: scale(0.95); }
 
-    .watermark { position: absolute; bottom: 20px; width: 100%; text-align: center; color: rgba(255,255,255,0.3); font-size: 12px; pointer-events: none; z-index: 10; }
+    .watermark { position: absolute; bottom: 20px; width: 100%; text-align: center; color: rgba(255,255,255,0.5); font-size: 14px; pointer-events: none; z-index: 10; text-shadow: 0 1px 2px black; }
   </style>
 </head>
 
@@ -46,7 +51,7 @@
 
   <div id="overlay">
     <h1>✨ 2026 ✨</h1>
-    <p>Ready for the Golden Celebration?</p>
+    <p>Tap below to start the Golden Celebration</p>
     <button id="startBtn">ENTER PARTY</button>
   </div>
 
@@ -55,7 +60,7 @@
   <a-scene 
     embedded
     arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
-    renderer="logarithmicDepthBuffer: true; colorManagement: true;"
+    renderer="logarithmicDepthBuffer: true; colorManagement: true; alpha: true;"
     vr-mode-ui="enabled: false">
 
     <a-marker preset="hiro" smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5">
@@ -84,10 +89,8 @@
         </a-octahedron>
 
         <a-entity position="0 -1.5 0.5">
-           <a-text value="HAPPY" align="center" position="0 0.4 0" width="6" 
-                   color="#ffffff"></a-text>
-           <a-text value="2026" align="center" position="0 -0.4 0" width="10" 
-                   color="#ffd700"></a-text>
+           <a-text value="HAPPY" align="center" position="0 0.4 0" width="6" color="#ffffff"></a-text>
+           <a-text value="2026" align="center" position="0 -0.4 0" width="10" color="#ffd700"></a-text>
         </a-entity>
 
       </a-entity>
@@ -100,12 +103,32 @@
     const overlay = document.getElementById('overlay');
     const startBtn = document.getElementById('startBtn');
 
+    // 1. User Interaction (Required for iOS Audio/Video permissions)
     startBtn.addEventListener('click', () => {
       overlay.style.opacity = '0';
       setTimeout(() => {
         overlay.style.display = 'none';
       }, 500);
     });
+
+    // 2. iOS "Playsinline" Fix
+    // This event fires when AR.js creates the video element.
+    // We force the video to play inline so it doesn't takeover the screen on iPhone.
+    window.addEventListener('arjs-video-loaded', (e) => {
+      const video = document.body.querySelector('video');
+      if (video) {
+        // These attributes are crucial for iOS
+        video.setAttribute('playsinline', '');
+        video.setAttribute('webkit-playsinline', '');
+        // Force resize event to ensure AR alignment is correct on load
+        window.dispatchEvent(new Event('resize'));
+      }
+    });
+    
+    // 3. HTTPS Check (Helper for debugging)
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost' && !location.hostname.startsWith('127.')) {
+        console.warn("AR.js works best over HTTPS. If camera doesn't open, switch to HTTPS.");
+    }
   </script>
 </body>
 </html>
