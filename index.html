@@ -5,11 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>✨ 2026 GOLD EDITION ✨</title>
 
-  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   
   <style>
-    /* CRITICAL FIX: Background must be transparent to see the video feed behind it */
     body { 
         margin: 0; 
         overflow: hidden; 
@@ -34,11 +33,16 @@
         border: none; border-radius: 50px; cursor: pointer;
         box-shadow: 0 0 30px rgba(255, 215, 0, 0.4);
         transform: scale(1); transition: transform 0.2s;
-        z-index: 10000; /* Ensure button is clickable */
+        z-index: 10000;
     }
     #startBtn:active { transform: scale(0.95); }
 
     .watermark { position: absolute; bottom: 20px; width: 100%; text-align: center; color: rgba(255,255,255,0.3); font-size: 12px; pointer-events: none; z-index: 10; }
+    
+    /* Ensure the video element created by AR.js stays behind the canvas */
+    #arjs-video {
+        z-index: -1 !important;
+    }
   </style>
 </head>
 
@@ -55,7 +59,7 @@
   <a-scene 
     embedded
     arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;"
-    renderer="logarithmicDepthBuffer: true; colorManagement: true;"
+    renderer="logarithmicDepthBuffer: true; colorManagement: true; alpha: true;"
     vr-mode-ui="enabled: false">
 
     <a-marker preset="hiro" smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5">
@@ -105,6 +109,10 @@
       setTimeout(() => {
         overlay.style.display = 'none';
       }, 500);
+      
+      // OPTIONAL: Explicitly try to play the video if iOS paused it
+      const video = document.querySelector('video');
+      if (video) { video.play(); }
     });
   </script>
 </body>
