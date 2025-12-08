@@ -1,64 +1,78 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AR Test - New Year Tree</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <title>AR New Year Tree</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     
     <style>
         body { margin: 0; overflow: hidden; }
-        .arjs-loader { display: none !important; }
-        #instructions {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            background: rgba(0,0,0,0.7);
+        /* Ensure the loader is visible if needed, or hidden if unwanted */
+        .arjs-loader {
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .arjs-loader div {
+            text-align: center;
+            font-size: 1.25em;
             color: white;
-            padding: 15px;
-            border-radius: 5px;
-            font-family: Arial;
-            z-index: 1000;
-            max-width: 300px;
         }
     </style>
 </head>
-<body>
-    <div id="instructions">
-        <strong>Point camera at Hiro marker</strong><br>
-        <small>Your New Year tree will appear!</small>
-    </div>
+
+<body style="margin : 0px; overflow: hidden;">
     
+    <div class="arjs-loader">
+        <div>Loading Augmented Reality...</div>
+    </div>
+
     <a-scene 
-        embedded 
-        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono;"
-        renderer="logarithmicDepthBuffer: true; colorManagement: true; alpha: true;"
-        vr-mode-ui="enabled: false">
-        
-        <!-- Assets preload -->
+        vr-mode-ui="enabled: false;"
+        renderer="logarithmicDepthBuffer: true; colorManagement: true;" 
+        arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+
         <a-assets>
-            <!-- Your New Year Tree Model -->
             <a-asset-item id="treeModel" src="game_ready_free_christmas_gifts.glb"></a-asset-item>
         </a-assets>
-        
+
         <a-marker preset="hiro">
-            <!-- Your New Year Tree -->
+            
             <a-entity 
                 gltf-model="#treeModel"
                 position="0 0 0"
-                scale="1 1 1"
-                rotation="0 0 0"
+                scale="0.5 0.5 0.5" 
                 animation="property: rotation; to: 0 360 0; dur: 8000; loop: true; easing: linear">
             </a-entity>
-            
-            <a-text value="Happy New Year!" 
-                    position="0 2 0" 
-                    align="center" 
-                    scale="1 1 1" 
-                    color="#FFD700">
-            </a-text>
+
+            <a-text 
+                value="Happy New Year!" 
+                position="0 1.5 0" 
+                align="center" 
+                color="#FFD700"
+                scale="2 2 2"> </a-text>
+
         </a-marker>
-        
+
         <a-entity camera></a-entity>
     </a-scene>
+    
+    <script>
+        window.addEventListener('arjs-nft-loaded', function () {
+            // Usually AR.js handles the loader automatically, 
+            // but this ensures we don't get stuck on white screen.
+          console.log("AR.js loaded");
+        });
+    </script>
 </body>
 </html>
