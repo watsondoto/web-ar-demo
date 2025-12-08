@@ -1,46 +1,57 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AR New Year Tree</title>
+    <title>AR Christmas & New Year</title>
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-    
+
     <style>
-        body { margin: 0; overflow: hidden; }
-        /* Ensure the loader is visible if needed, or hidden if unwanted */
-        .arjs-loader {
-            height: 100%;
-            width: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-            background-color: rgba(0, 0, 0, 0.8);
+        body { margin: 0; overflow: hidden; font-family: sans-serif; }
+        
+        /* Custom Loader Design */
+        #custom-loader {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
             z-index: 9999;
             display: flex;
             justify-content: center;
             align-items: center;
-        }
-        .arjs-loader div {
-            text-align: center;
-            font-size: 1.25em;
+            flex-direction: column;
             color: white;
+            transition: opacity 0.5s ease;
+        }
+        
+        /* A button to force start if it gets stuck */
+        #start-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            display: none; /* Hidden by default, shows after 3 seconds */
         }
     </style>
 </head>
 
-<body style="margin : 0px; overflow: hidden;">
-    
-    <div class="arjs-loader">
-        <div>Loading Augmented Reality...</div>
+<body>
+
+    <div id="custom-loader">
+        <div>Loading Camera...</div>
+        <button id="start-btn" onclick="hideLoader()">Tap to Start</button>
     </div>
 
     <a-scene 
-        vr-mode-ui="enabled: false;"
-        renderer="logarithmicDepthBuffer: true; colorManagement: true;" 
-        arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;">
+        embedded 
+        arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono;"
+        renderer="logarithmicDepthBuffer: true; colorManagement: true;"
+        vr-mode-ui="enabled: false"
+        id="scene">
 
         <a-assets>
             <a-asset-item id="treeModel" src="game_ready_free_christmas_gifts.glb"></a-asset-item>
@@ -51,28 +62,60 @@
             <a-entity 
                 gltf-model="#treeModel"
                 position="0 0 0"
-                scale="0.5 0.5 0.5" 
+                scale="0.5 0.5 0.5"
                 animation="property: rotation; to: 0 360 0; dur: 8000; loop: true; easing: linear">
             </a-entity>
 
             <a-text 
-                value="Happy New Year!" 
-                position="0 1.5 0" 
+                value="Merry Christmas" 
+                position="0 2.2 0" 
                 align="center" 
+                scale="2 2 2"
+                color="#e74c3c"
+                font="exo2bold"> </a-text>
+
+            <a-text 
+                value="& Happy New Year!" 
+                position="0 1.6 0" 
+                align="center" 
+                scale="1.5 1.5 1.5"
                 color="#FFD700"
-                scale="2 2 2"> </a-text>
+                font="exo2bold">
+            </a-text>
 
         </a-marker>
 
         <a-entity camera></a-entity>
     </a-scene>
-    
+
     <script>
-        window.addEventListener('arjs-nft-loaded', function () {
-            // Usually AR.js handles the loader automatically, 
-            // but this ensures we don't get stuck on white screen.
-          console.log("AR.js loaded");
+        const loader = document.getElementById('custom-loader');
+        const startBtn = document.getElementById('start-btn');
+
+        // Function to hide loader
+        function hideLoader() {
+            loader.style.opacity = '0';
+            setTimeout(() => {
+                loader.style.display = 'none';
+            }, 500);
+        }
+
+        // Show "Tap to Start" button if loading takes more than 4 seconds
+        // (This saves you if the automatic event fails)
+        setTimeout(() => {
+            if (loader.style.display !== 'none') {
+                startBtn.style.display = 'block';
+                document.querySelector('#custom-loader div').innerText = "Camera ready?";
+            }
+        }, 4000);
+
+        // Try to detect when AR is ready automatically
+        const scene = document.querySelector('a-scene');
+        scene.addEventListener('loaded', () => { 
+            // Wait a tiny bit for the camera stream
+            setTimeout(hideLoader, 2000);
         });
     </script>
+
 </body>
 </html>
