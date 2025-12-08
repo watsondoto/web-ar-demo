@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AR Test - 3D People</title>
+    <title>AR Test - New Year Tree</title>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     
@@ -25,7 +25,7 @@
 <body>
     <div id="instructions">
         <strong>Point camera at Hiro marker</strong><br>
-        <small>The 3D model will appear on the marker</small>
+        <small>Your New Year tree will appear!</small>
     </div>
     
     <a-scene 
@@ -36,39 +36,25 @@
         
         <!-- Assets preload -->
         <a-assets>
-            <!-- Option 1: Use a CDN-hosted model -->
-            <!-- Example: Replace this URL with your own GLB/GLTF model -->
-            <!-- <a-asset-item id="personModel" src="YOUR_MODEL_URL.glb"></a-asset-item> -->
+            <!-- Your New Year Tree Model -->
+            <a-asset-item id="treeModel" src="stylized_new_year_tree.glb"></a-asset-item>
         </a-assets>
         
         <a-marker preset="hiro">
-            <!-- Simple placeholder box (remove when you add real model) -->
-            <a-box position="0 0.5 0" 
-                   material="color: red; opacity: 0.8;"
-                   animation="property: rotation; to: 0 360 0; dur: 2000; loop: true; easing: linear">
-            </a-box>
-            
-          
+            <!-- Your New Year Tree -->
             <a-entity 
-                gltf-model="#personModel"
+                gltf-model="#treeModel"
                 position="0 0 0"
                 scale="1 1 1"
                 rotation="0 0 0"
                 animation="property: rotation; to: 0 360 0; dur: 8000; loop: true; easing: linear">
             </a-entity>
             
-            <!-- Multiple people example -->
-            <!--
-            <a-entity gltf-model="#personModel" position="-1 0 0" scale="0.8 0.8 0.8"></a-entity>
-            <a-entity gltf-model="#personModel" position="0 0 0" scale="1 1 1"></a-entity>
-            <a-entity gltf-model="#personModel" position="1 0 0" scale="0.8 0.8 0.8"></a-entity>
-            -->
-            
-            <a-text value="ADD YOUR 3D MODEL!" 
-                    position="0 1.5 0" 
+            <a-text value="Happy New Year!" 
+                    position="0 2 0" 
                     align="center" 
-                    scale="1.5 1.5 1.5" 
-                    color="yellow">
+                    scale="1 1 1" 
+                    color="#FFD700">
             </a-text>
         </a-marker>
         
